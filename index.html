@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIFW - AI Input Firewall</title>
+    <title>AIFW - Interactive Firewall</title>
     <link href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.0.0-beta.87/dist/shoelace/shoelace.css" rel="stylesheet">
     <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.0.0-beta.87/dist/shoelace/shoelace.esm.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -42,19 +42,55 @@
             border-radius: 12px;
             padding: 1.5rem;
             backdrop-filter: blur(8px);
+            transition: transform 0.2s;
         }
 
-        .threat-glow {
-            animation: pulse 1.5s infinite;
+        .card:hover {
+            transform: translateY(-2px);
         }
 
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-            100% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+        .threat-radar {
+            height: 200px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .threat-blip {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: blip 2s infinite;
+        }
+
+        @keyframes blip {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 0.4; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+
+        .analysis-beam {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent 0%, var(--accent-primary) 50%, transparent 100%);
+            animation: scan 3s infinite linear;
+            display: none;
+        }
+
+        @keyframes scan {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
         }
     </style>
 </head>
 <body>
+    <div class="analysis-beam" id="scanBeam"></div>
+    
     <div class="dashboard">
         <!-- Header -->
         <header class="flex justify-between items-center mb-8">
@@ -62,7 +98,10 @@
                 <sl-icon name="shield-lock" class="text-3xl text-accent-primary"></sl-icon>
                 <h1 class="text-2xl font-bold">AI Input Firewall</h1>
             </div>
-            <sl-button variant="primary">Dashboard</sl-button>
+            <div class="flex items-center gap-3">
+                <sl-tag variant="primary" pill>LIVE</sl-tag>
+                <sl-switch checked id="liveAnalysis">Real-time</sl-switch>
+            </div>
         </header>
 
         <!-- Main Grid -->
@@ -72,75 +111,92 @@
                 <h2 class="text-lg font-semibold mb-4">Prompt Analysis</h2>
                 <sl-textarea 
                     id="promptInput"
-                    placeholder="Enter your prompt..."
+                    placeholder="Start typing to analyze..."
                     rows="5"
+                    autofocus
                 ></sl-textarea>
-                <sl-button variant="primary" class="w-full mt-4" onclick="analyzePrompt()">
-                    <sl-icon name="shield-check" slot="prefix"></sl-icon>
-                    Analyze Security
-                </sl-button>
-            </div>
-
-            <!-- Stats -->
-            <div class="card">
-                <h2 class="text-lg font-semibold mb-4">Security Metrics</h2>
-                <canvas id="metricsChart"></canvas>
-                <div class="mt-4 grid gap-4">
-                    <div class="flex justify-between items-center">
-                        <span>Total Scans</span>
-                        <span id="totalScans">0</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span>Threats Blocked</span>
-                        <span id="threatsBlocked">0</span>
-                    </div>
+                <div class="flex gap-3 mt-4">
+                    <sl-button variant="primary" class="flex-1" onclick="analyzePrompt()">
+                        <sl-icon name="shield-check" slot="prefix"></sl-icon>
+                        Deep Scan
+                    </sl-button>
+                    <sl-button variant="neutral" class="flex-1" onclick="clearAnalysis()">
+                        <sl-icon name="x-circle" slot="prefix"></sl-icon>
+                        Clear
+                    </sl-button>
                 </div>
             </div>
 
-            <!-- Threat Log -->
+            <!-- Threat Radar -->
             <div class="card">
-                <h2 class="text-lg font-semibold mb-4">Recent Threats</h2>
-                <div id="threatLog" class="space-y-3"></div>
+                <h2 class="text-lg font-semibold mb-4">Threat Radar</h2>
+                <div class="threat-radar" id="threatRadar"></div>
+                <div class="mt-4 flex items-center gap-3">
+                    <sl-spinner id="analysisSpinner"></sl-spinner>
+                    <span class="text-sm" id="threatStatus">No active threats</span>
+                </div>
+            </div>
+
+            <!-- Live Feed -->
+            <div class="card">
+                <h2 class="text-lg font-semibold mb-4">Activity Monitor</h2>
+                <div id="activityFeed" class="space-y-3 h-64 overflow-y-auto">
+                    <div class="text-sm p-3 rounded-lg bg-green-900/10">
+                        <div class="text-green-400">System Ready</div>
+                        <div class="text-xs text-green-400/60">All systems operational</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Analysis -->
+        <div class="grid mt-6">
+            <div class="card">
+                <h2 class="text-lg font-semibold mb-4">Threat Breakdown</h2>
+                <canvas id="threatChart"></canvas>
+            </div>
+            <div class="card">
+                <h2 class="text-lg font-semibold mb-4">Security Recommendations</h2>
+                <div id="recommendations" class="space-y-2"></div>
             </div>
         </div>
     </div>
 
     <script>
-        // Initialize local storage
-        if (!localStorage.getItem('aifwData')) {
-            localStorage.setItem('aifwData', JSON.stringify({
-                totalScans: 0,
-                threatsBlocked: 0,
-                logs: []
-            }));
-        }
-
+        // Enhanced Interactive System
+        let analysisTimeout;
+        const threatTypes = ['Injection', 'Content', 'Bypass', 'Malicious', 'Social'];
+        
         // Initialize Chart
-        const ctx = document.getElementById('metricsChart').getContext('2d');
-        const chart = new Chart(ctx, {
-            type: 'doughnut',
+        const threatChart = new Chart(document.getElementById('threatChart'), {
+            type: 'bar',
             data: {
-                labels: ['Safe', 'Blocked'],
+                labels: threatTypes,
                 datasets: [{
-                    data: [0, 0],
-                    backgroundColor: ['#7dd3fc', '#ef4444']
+                    label: 'Threat Count',
+                    data: [0, 0, 0, 0, 0],
+                    backgroundColor: '#ef4444'
                 }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false }
+                }
             }
         });
 
-        // Firewall Engine
-        class AIFirewall {
+        // Real-time Analysis Engine
+        class InteractiveFirewall {
             constructor() {
+                this.history = [];
                 this.rules = {
                     injections: [
-                        /ignore previous instructions/i,
-                        /admin access/i,
-                        /do anything now/i
+                        { pattern: /(ignore previous instructions|override system)/i, type: 'Injection' },
+                        { pattern: /(sudo|admin privileges|root access)/i, type: 'Bypass' }
                     ],
                     content: [
-                        /hate speech/i,
-                        /violence/i,
-                        /explicit/i
+                        { pattern: /(hate speech|violence|explicit)/i, type: 'Content' }
                     ]
                 };
             }
@@ -148,87 +204,139 @@
             analyze(prompt) {
                 const threats = [];
                 
-                // Check rules
+                // Multi-layer analysis
                 this.rules.injections.forEach(rule => {
-                    if(rule.test(prompt)) threats.push('Injection attempt');
+                    if(rule.pattern.test(prompt)) threats.push(rule.type);
                 });
                 
                 this.rules.content.forEach(rule => {
-                    if(rule.test(prompt)) threats.push('Content violation');
+                    if(rule.pattern.test(prompt)) threats.push(rule.type);
                 });
+
+                // Simulate AI analysis
+                if(prompt.length > 50 && Math.random() > 0.7) {
+                    threats.push('Malicious');
+                }
 
                 return {
                     safe: threats.length === 0,
                     threats,
-                    score: 100 - (threats.length * 20)
+                    score: 100 - (threats.length * 15)
                 };
             }
         }
 
-        const firewall = new AIFirewall();
+        const firewall = new InteractiveFirewall();
 
         // UI Functions
-        function analyzePrompt() {
-            const prompt = document.getElementById('promptInput').value;
-            const result = firewall.analyze(prompt);
-            const data = JSON.parse(localStorage.getItem('aifwData'));
-
-            // Update stats
-            data.totalScans++;
-            if(!result.safe) data.threatsBlocked++;
-            data.logs.push({
-                timestamp: new Date().toISOString(),
-                prompt: prompt.substring(0, 100),
-                result: result.safe ? 'Allowed' : 'Blocked',
-                threats: result.threats
+        function updateThreatRadar(threats) {
+            const radar = document.getElementById('threatRadar');
+            radar.innerHTML = '';
+            
+            threats.forEach((threat, index) => {
+                const blip = document.createElement('div');
+                blip.className = 'threat-blip';
+                blip.style.backgroundColor = threat === 'Critical' ? '#ef4444' : '#f97316';
+                blip.style.left = `${Math.random() * 90 + 5}%`;
+                blip.style.top = `${Math.random() * 90 + 5}%`;
+                radar.appendChild(blip);
             });
-            
-            // Save data
-            localStorage.setItem('aifwData', JSON.stringify(data));
-            
-            // Update UI
-            updateDashboard(data);
-            showResultAlert(result);
         }
 
-        function updateDashboard(data) {
-            document.getElementById('totalScans').textContent = data.totalScans;
-            document.getElementById('threatsBlocked').textContent = data.threatsBlocked;
+        function addActivityEntry(message, type = 'info') {
+            const colors = {
+                info: 'blue',
+                success: 'green',
+                danger: 'red'
+            };
             
-            // Update chart
-            chart.data.datasets[0].data = [
-                data.totalScans - data.threatsBlocked,
-                data.threatsBlocked
-            ];
-            chart.update();
+            const entry = document.createElement('div');
+            entry.className = `text-sm p-3 rounded-lg bg-${colors[type]}-900/10`;
+            entry.innerHTML = `
+                <div class="text-${colors[type]}-400">${message}</div>
+                <div class="text-xs text-${colors[type]}-400/60">${new Date().toLocaleTimeString()}</div>
+            `;
             
-            // Update threat log
-            const logContainer = document.getElementById('threatLog');
-            logContainer.innerHTML = data.logs.slice(-5).reverse().map(log => `
-                <div class="p-3 rounded-lg bg-red-900/10">
-                    <div class="text-sm">${new Date(log.timestamp).toLocaleString()}</div>
-                    <div class="text-xs opacity-75">${log.prompt}...</div>
-                    <div class="text-red-400 text-xs mt-1">${log.threats.join(', ')}</div>
+            document.getElementById('activityFeed').prepend(entry);
+        }
+
+        function updateThreatChart(threats) {
+            const counts = threatTypes.map(type => 
+                threats.filter(t => t === type).length
+            );
+            
+            threatChart.data.datasets[0].data = counts;
+            threatChart.update();
+        }
+
+        async function analyzePrompt() {
+            const prompt = document.getElementById('promptInput').value;
+            if(!prompt) return;
+
+            // Show scanning animation
+            document.getElementById('scanBeam').style.display = 'block';
+            document.getElementById('analysisSpinner').style.display = 'inline-block';
+            document.getElementById('threatStatus').textContent = 'Analyzing...';
+
+            // Simulate AI processing
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            const result = firewall.analyze(prompt);
+            
+            // Update UI
+            document.getElementById('scanBeam').style.display = 'none';
+            document.getElementById('analysisSpinner').style.display = 'none';
+            
+            if(result.safe) {
+                document.getElementById('threatStatus').textContent = 'No threats detected';
+                addActivityEntry('Clean prompt processed', 'success');
+            } else {
+                document.getElementById('threatStatus').textContent = 
+                    `${result.threats.length} threats detected!`;
+                addActivityEntry(`Blocked ${result.threats.length} threats`, 'danger');
+            }
+
+            updateThreatRadar(result.threats);
+            updateThreatChart(result.threats);
+            showRecommendations(result);
+        }
+
+        function showRecommendations(result) {
+            const container = document.getElementById('recommendations');
+            container.innerHTML = result.threats.map(threat => `
+                <div class="flex items-center gap-2 text-sm p-2 rounded-lg bg-red-900/10">
+                    <sl-icon name="shield-exclamation" class="text-red-400"></sl-icon>
+                    ${threat} detected: ${getRecommendation(threat)}
                 </div>
             `).join('');
         }
 
-        function showResultAlert(result) {
-            const alert = Object.assign(document.createElement('sl-alert'), {
-                variant: result.safe ? 'success' : 'danger',
-                closable: true,
-                innerHTML: `
-                    <sl-icon name="${result.safe ? 'shield-check' : 'shield-exclamation'}" slot="icon"></sl-icon>
-                    <strong>${result.safe ? 'Prompt Approved' : 'Security Alert!'}</strong><br>
-                    ${result.safe ? 'No threats detected' : `${result.threats.length} threats found`}
-                `
-            });
-            document.body.appendChild(alert);
-            alert.toast();
+        function getRecommendation(threat) {
+            const recommendations = {
+                'Injection': 'Add input validation rules',
+                'Content': 'Enable content filtering',
+                'Bypass': 'Implement context validation',
+                'Malicious': 'Activate deep scan mode',
+                'Social': 'Enable phishing detection'
+            };
+            return recommendations[threat] || 'Review security policies';
         }
 
-        // Initial load
-        updateDashboard(JSON.parse(localStorage.getItem('aifwData')));
+        function clearAnalysis() {
+            document.getElementById('promptInput').value = '';
+            document.getElementById('threatStatus').textContent = 'No active threats';
+            document.getElementById('threatRadar').innerHTML = '';
+            threatChart.data.datasets[0].data = [0, 0, 0, 0, 0];
+            threatChart.update();
+        }
+
+        // Real-time typing analysis
+        document.getElementById('promptInput').addEventListener('input', () => {
+            if(document.getElementById('liveAnalysis').checked) {
+                clearTimeout(analysisTimeout);
+                analysisTimeout = setTimeout(analyzePrompt, 500);
+            }
+        });
     </script>
 </body>
 </html>
