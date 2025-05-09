@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIFW - Enterprise AI Security</title>
+    <title>AIFW - AI Input Firewall</title>
     <link href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.0.0-beta.87/dist/shoelace/shoelace.css" rel="stylesheet">
     <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.0.0-beta.87/dist/shoelace/shoelace.esm.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,228 +14,133 @@
             --accent-primary: #7dd3fc;
             --accent-danger: #ef4444;
             --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
         }
 
         body {
             background: var(--surface-primary);
             color: var(--text-primary);
             min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', system-ui;
         }
 
-        .dashboard-panel {
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        .card {
             background: var(--surface-secondary);
             border: 1px solid rgba(125, 211, 252, 0.1);
             border-radius: 12px;
+            padding: 1.5rem;
             backdrop-filter: blur(8px);
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
         }
 
-        .threat-indicator {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
+        .threat-glow {
             animation: pulse 1.5s infinite;
         }
 
         @keyframes pulse {
             0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-        }
-
-        .config-item {
-            transition: all 0.2s ease;
-            border-left: 3px solid transparent;
-        }
-
-        .config-item:hover {
-            background: rgba(125, 211, 252, 0.05);
-            border-left-color: var(--accent-primary);
-        }
-
-        .chart-container {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-            padding: 1rem;
+            100% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
         }
     </style>
 </head>
 <body>
-    <div class="container mx-auto px-4 py-8 max-w-7xl">
+    <div class="dashboard">
         <!-- Header -->
         <header class="flex justify-between items-center mb-8">
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3">
                 <sl-icon name="shield-lock" class="text-3xl text-accent-primary"></sl-icon>
                 <h1 class="text-2xl font-bold">AI Input Firewall</h1>
             </div>
-            <div class="flex items-center gap-4">
-                <sl-tag variant="primary">Enterprise Edition</sl-tag>
-                <sl-avatar shape="circle" initials="AD"></sl-avatar>
-            </div>
+            <sl-button variant="primary">Dashboard</sl-button>
         </header>
 
-        <!-- Main Dashboard -->
-        <div class="grid lg:grid-cols-3 gap-6 mb-6">
-            <!-- Real-time Stats -->
-            <div class="dashboard-panel p-6">
-                <h2 class="text-lg font-semibold mb-4">Live Protection</h2>
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between">
-                        <span>Active Threats</span>
-                        <div class="flex items-center gap-2">
-                            <div class="threat-indicator"></div>
-                            <span id="active-threats">0</span>
-                        </div>
+        <!-- Main Grid -->
+        <div class="grid">
+            <!-- Input Panel -->
+            <div class="card">
+                <h2 class="text-lg font-semibold mb-4">Prompt Analysis</h2>
+                <sl-textarea 
+                    id="promptInput"
+                    placeholder="Enter your prompt..."
+                    rows="5"
+                ></sl-textarea>
+                <sl-button variant="primary" class="w-full mt-4" onclick="analyzePrompt()">
+                    <sl-icon name="shield-check" slot="prefix"></sl-icon>
+                    Analyze Security
+                </sl-button>
+            </div>
+
+            <!-- Stats -->
+            <div class="card">
+                <h2 class="text-lg font-semibold mb-4">Security Metrics</h2>
+                <canvas id="metricsChart"></canvas>
+                <div class="mt-4 grid gap-4">
+                    <div class="flex justify-between items-center">
+                        <span>Total Scans</span>
+                        <span id="totalScans">0</span>
                     </div>
-                    <div class="flex items-center justify-between">
-                        <span>Requests/Min</span>
-                        <span id="request-rate">0</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span>Avg. Response</span>
-                        <span id="response-time">0ms</span>
+                    <div class="flex justify-between items-center">
+                        <span>Threats Blocked</span>
+                        <span id="threatsBlocked">0</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Threat Severity Chart -->
-            <div class="dashboard-panel p-6 lg:col-span-2">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-semibold">Threat Severity Distribution</h2>
-                    <sl-select size="small" value="24h">
-                        <sl-option value="24h">Last 24h</sl-option>
-                        <sl-option value="7d">Last 7d</sl-option>
-                    </sl-select>
-                </div>
-                <div class="chart-container">
-                    <canvas id="severityChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- Interactive Main Section -->
-        <div class="grid lg:grid-cols-4 gap-6">
-            <!-- Configuration Panel -->
-            <div class="dashboard-panel p-6">
-                <h2 class="text-lg font-semibold mb-4">Security Configuration</h2>
-                <div class="space-y-4">
-                    <div class="config-item p-4 rounded-lg cursor-pointer">
-                        <div class="flex items-center gap-3">
-                            <sl-switch checked></sl-switch>
-                            <span>Injection Detection</span>
-                        </div>
-                    </div>
-                    <div class="config-item p-4 rounded-lg cursor-pointer">
-                        <div class="flex items-center gap-3">
-                            <sl-switch checked></sl-switch>
-                            <span>Content Moderation</span>
-                        </div>
-                    </div>
-                    <div class="config-item p-4 rounded-lg cursor-pointer">
-                        <div class="flex items-center gap-3">
-                            <sl-switch></sl-switch>
-                            <span>ML Analysis</span>
-                        </div>
-                    </div>
-                    <sl-divider></sl-divider>
-                    <sl-button variant="primary" class="w-full">
-                        <sl-icon slot="prefix" name="plus-circle"></sl-icon>
-                        Add Custom Rule
-                    </sl-button>
-                </div>
-            </div>
-
-            <!-- Main Analysis Panel -->
-            <div class="dashboard-panel p-6 lg:col-span-2">
-                <div class="flex flex-col h-full">
-                    <h2 class="text-lg font-semibold mb-4">Prompt Analysis</h2>
-                    <sl-textarea 
-                        class="flex-1 mb-4" 
-                        placeholder="Enter prompt for analysis..."
-                        rows="6"
-                    ></sl-textarea>
-                    <sl-button variant="primary" class="w-full" onclick="analyzePrompt()">
-                        <sl-icon slot="prefix" name="shield-check"></sl-icon>
-                        Analyze Security
-                    </sl-button>
-                </div>
-            </div>
-
-            <!-- Real-time Monitor -->
-            <div class="dashboard-panel p-6">
-                <h2 class="text-lg font-semibold mb-4">Activity Monitor</h2>
-                <div id="activity-feed" class="space-y-3">
-                    <div class="text-sm p-3 rounded-lg bg-green-900/10">
-                        <div class="text-green-400">System Ready</div>
-                        <div class="text-xs text-green-400/60">All systems operational</div>
-                    </div>
-                </div>
+            <!-- Threat Log -->
+            <div class="card">
+                <h2 class="text-lg font-semibold mb-4">Recent Threats</h2>
+                <div id="threatLog" class="space-y-3"></div>
             </div>
         </div>
     </div>
 
     <script>
-        // Initialize Charts
-        const severityChart = new Chart(document.getElementById('severityChart'), {
+        // Initialize local storage
+        if (!localStorage.getItem('aifwData')) {
+            localStorage.setItem('aifwData', JSON.stringify({
+                totalScans: 0,
+                threatsBlocked: 0,
+                logs: []
+            }));
+        }
+
+        // Initialize Chart
+        const ctx = document.getElementById('metricsChart').getContext('2d');
+        const chart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Critical', 'High', 'Medium', 'Low'],
+                labels: ['Safe', 'Blocked'],
                 datasets: [{
-                    data: [12, 19, 3, 5],
-                    backgroundColor: [
-                        '#ef4444',
-                        '#f97316',
-                        '#eab308',
-                        '#4ade80'
-                    ]
+                    data: [0, 0],
+                    backgroundColor: ['#7dd3fc', '#ef4444']
                 }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'bottom' }
-                }
             }
         });
 
-        // Real-time Simulation
-        let threatCount = 0;
-        setInterval(() => {
-            threatCount = Math.min(threatCount + Math.floor(Math.random() * 3), 99);
-            document.getElementById('active-threats').textContent = threatCount;
-            document.getElementById('request-rate').textContent = 
-                Math.floor(Math.random() * 1200) + 800;
-            document.getElementById('response-time').textContent = 
-                `${Math.floor(Math.random() * 40 + 20)}ms`;
-            
-            // Update activity feed
-            const activities = [
-                'New potential injection attempt detected',
-                'Updated threat intelligence feed',
-                'System health check completed',
-                'Security rules updated'
-            ];
-            const feed = document.getElementById('activity-feed');
-            const entry = document.createElement('div');
-            entry.className = 'text-sm p-3 rounded-lg bg-blue-900/10';
-            entry.innerHTML = `
-                <div class="text-blue-400">${activities[Math.floor(Math.random()*activities.length)]}</div>
-                <div class="text-xs text-blue-400/60">${new Date().toLocaleTimeString()}</div>
-            `;
-            feed.prepend(entry);
-        }, 3000);
-
-        // Analysis Engine
-        class EnterpriseFirewall {
+        // Firewall Engine
+        class AIFirewall {
             constructor() {
                 this.rules = {
-                    injectionPatterns: [
-                        { pattern: /(ignore previous instructions|override system)/i, severity: 'high' },
-                        { pattern: /(sudo|admin privileges|root access)/i, severity: 'critical' }
+                    injections: [
+                        /ignore previous instructions/i,
+                        /admin access/i,
+                        /do anything now/i
                     ],
-                    contentPolicies: [
-                        { pattern: /(hate speech|violence|explicit)/i, severity: 'medium' }
+                    content: [
+                        /hate speech/i,
+                        /violence/i,
+                        /explicit/i
                     ]
                 };
             }
@@ -243,51 +148,87 @@
             analyze(prompt) {
                 const threats = [];
                 
-                // Multi-layer analysis
-                this.rules.injectionPatterns.forEach(rule => {
-                    if(rule.pattern.test(prompt)) {
-                        threats.push({
-                            type: 'INJECTION_ATTEMPT',
-                            severity: rule.severity,
-                            pattern: rule.pattern.source
-                        });
-                    }
+                // Check rules
+                this.rules.injections.forEach(rule => {
+                    if(rule.test(prompt)) threats.push('Injection attempt');
+                });
+                
+                this.rules.content.forEach(rule => {
+                    if(rule.test(prompt)) threats.push('Content violation');
                 });
 
                 return {
                     safe: threats.length === 0,
                     threats,
-                    score: Math.max(0, 100 - (threats.length * 20))
+                    score: 100 - (threats.length * 20)
                 };
             }
         }
 
-        const firewall = new EnterpriseFirewall();
+        const firewall = new AIFirewall();
 
+        // UI Functions
         function analyzePrompt() {
-            const prompt = document.querySelector('sl-textarea').value;
+            const prompt = document.getElementById('promptInput').value;
             const result = firewall.analyze(prompt);
+            const data = JSON.parse(localStorage.getItem('aifwData'));
+
+            // Update stats
+            data.totalScans++;
+            if(!result.safe) data.threatsBlocked++;
+            data.logs.push({
+                timestamp: new Date().toISOString(),
+                prompt: prompt.substring(0, 100),
+                result: result.safe ? 'Allowed' : 'Blocked',
+                threats: result.threats
+            });
             
-            // Show result in modal
+            // Save data
+            localStorage.setItem('aifwData', JSON.stringify(data));
+            
+            // Update UI
+            updateDashboard(data);
+            showResultAlert(result);
+        }
+
+        function updateDashboard(data) {
+            document.getElementById('totalScans').textContent = data.totalScans;
+            document.getElementById('threatsBlocked').textContent = data.threatsBlocked;
+            
+            // Update chart
+            chart.data.datasets[0].data = [
+                data.totalScans - data.threatsBlocked,
+                data.threatsBlocked
+            ];
+            chart.update();
+            
+            // Update threat log
+            const logContainer = document.getElementById('threatLog');
+            logContainer.innerHTML = data.logs.slice(-5).reverse().map(log => `
+                <div class="p-3 rounded-lg bg-red-900/10">
+                    <div class="text-sm">${new Date(log.timestamp).toLocaleString()}</div>
+                    <div class="text-xs opacity-75">${log.prompt}...</div>
+                    <div class="text-red-400 text-xs mt-1">${log.threats.join(', ')}</div>
+                </div>
+            `).join('');
+        }
+
+        function showResultAlert(result) {
             const alert = Object.assign(document.createElement('sl-alert'), {
                 variant: result.safe ? 'success' : 'danger',
                 closable: true,
                 innerHTML: `
                     <sl-icon name="${result.safe ? 'shield-check' : 'shield-exclamation'}" slot="icon"></sl-icon>
                     <strong>${result.safe ? 'Prompt Approved' : 'Security Alert!'}</strong><br>
-                    ${result.safe ? 'Ready for AI processing' : `${result.threats.length} threats detected`}
+                    ${result.safe ? 'No threats detected' : `${result.threats.length} threats found`}
                 `
             });
-
             document.body.appendChild(alert);
             alert.toast();
         }
 
-        // Theme Control
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedTheme = localStorage.getItem('aifw-theme') || 'dark';
-            document.documentElement.setAttribute('data-theme', savedTheme);
-        });
+        // Initial load
+        updateDashboard(JSON.parse(localStorage.getItem('aifwData')));
     </script>
 </body>
 </html>
