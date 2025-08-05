@@ -2,70 +2,525 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>KnownGPT - Chat with Your Data</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EUR/USD Historical Data Assistant</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
-        #chatbox { width: 100%; height: 400px; border: 1px solid #ccc; padding: 10px; overflow-y: scroll; background: white; margin-bottom: 10px; }
-        input[type="text"] { width: 80%; padding: 10px; font-size: 16px; }
-        button { padding: 10px 20px; font-size: 16px; }
-        .user { color: blue; }
-        .bot { color: green; }
+        :root {
+            --primary: #7D2EFF;
+            --secondary: #f5f8fa;
+            --text: #232a31;
+            --accent: #12a9ff;
+            --success: #21d87d;
+            --error: #fc7a6e;
+            --border: #e0e4e9;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f8fa 0%, #e6f0ff 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        header {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            border-bottom: 4px solid var(--primary);
+        }
+        
+        h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+        }
+        
+        .subtitle {
+            color: #5b636a;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+        
+        .metadata {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .metadata-item {
+            background: var(--secondary);
+            padding: 8px 15px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .metadata-item i {
+            color: var(--primary);
+        }
+        
+        .content {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .chat-container {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-header {
+            background: var(--primary);
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+        }
+        
+        .chat-history {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .message {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            line-height: 1.5;
+            position: relative;
+        }
+        
+        .user-message {
+            background: var(--secondary);
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .bot-message {
+            background: #f0f3ff;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .chat-input {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .chat-input input:focus {
+            border-color: var(--accent);
+        }
+        
+        .chat-input button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        .chat-input button:hover {
+            background: #6b1ae0;
+        }
+        
+        .data-container {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .data-header {
+            background: var(--primary);
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+        }
+        
+        .data-content {
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .data-section {
+            margin-bottom: 25px;
+        }
+        
+        .data-section h3 {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--secondary);
+            color: var(--primary);
+        }
+        
+        .data-item {
+            margin-bottom: 12px;
+            padding: 10px;
+            background: var(--secondary);
+            border-radius: 8px;
+        }
+        
+        .data-key {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--primary);
+        }
+        
+        .data-value {
+            color: #464e56;
+        }
+        
+        .trending-container {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            width: 100%;
+        }
+        
+        .trending-header {
+            background: var(--primary);
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+        }
+        
+        .trending-content {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .trending-item {
+            background: var(--secondary);
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: transform 0.3s;
+        }
+        
+        .trending-item:hover {
+            transform: translateY(-3px);
+        }
+        
+        .stock-symbol {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+        
+        .stock-name {
+            font-size: 0.9rem;
+            color: #5b636a;
+            flex: 1;
+        }
+        
+        .stock-price {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        .stock-change {
+            font-weight: 600;
+        }
+        
+        .positive {
+            color: var(--success);
+        }
+        
+        .negative {
+            color: var(--error);
+        }
+        
+        .examples {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .example-btn {
+            background: rgba(125, 46, 255, 0.1);
+            color: var(--primary);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+        
+        .example-btn:hover {
+            background: rgba(125, 46, 255, 0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            .chat-container, .data-container {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>KnownGPT</h1>
-    <p>Ask anything about the scraped data from <strong>known_data.json</strong></p>
-    <div id="chatbox"></div>
-    <input type="text" id="userInput" placeholder="Ask a question...">
-    <button onclick="processInput()">Send</button>
+    <div class="container">
+        <header>
+            <h1>EUR/USD Historical Data Assistant</h1>
+            <p class="subtitle">Ask questions about EUR/USD historical prices and data from Yahoo Finance</p>
+            <div class="metadata">
+                <div class="metadata-item">
+                    <i>📅</i> <span>Timestamp: 2025-08-05T08:03:14.142Z</span>
+                </div>
+                <div class="metadata-item">
+                    <i>🌐</i> <span>Source: Yahoo Finance</span>
+                </div>
+                <div class="metadata-item">
+                    <i>💱</i> <span>Currency Pair: EUR/USD</span>
+                </div>
+            </div>
+        </header>
+        
+        <div class="content">
+            <div class="chat-container">
+                <div class="chat-header">Chat with EUR/USD Assistant</div>
+                <div class="chat-history" id="chatHistory">
+                    <div class="message bot-message">
+                        Hi! I'm your EUR/USD assistant. I can help you with historical price data and information about the EUR/USD currency pair. What would you like to know?
+                    </div>
+                </div>
+                <div class="chat-input">
+                    <input type="text" id="userInput" placeholder="Ask about EUR/USD historical data...">
+                    <button id="sendBtn">Send</button>
+                </div>
+            </div>
+            
+            <div class="data-container">
+                <div class="data-header">EUR/USD Data Overview</div>
+                <div class="data-content">
+                    <div class="data-section">
+                        <h3>Page Information</h3>
+                        <div class="data-item">
+                            <div class="data-key">Page Title</div>
+                            <div class="data-value">EUR/USD (EURUSD=X) Stock Historical Prices & Data - Yahoo Finance</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-key">Description</div>
+                            <div class="data-value">Discover historical prices for EURUSD=X stock on Yahoo Finance. View daily, weekly or monthly format back to when EUR/USD stock was issued.</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-key">URL</div>
+                            <div class="data-value">https://finance.yahoo.com/quote/EURUSD%3DX/history</div>
+                        </div>
+                    </div>
+                    
+                    <div class="data-section">
+                        <h3>Related Currency Pairs</h3>
+                        <div class="data-item">
+                            <div class="data-value">JPY=X, GBPUSD=X, AUDUSD=X, NZDUSD=X, EURJPY=X</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-value">GBPJPY=X, EURGBP=X, EURCAD=X, EURSEK=X, EURCHF=X</div>
+                        </div>
+                    </div>
+                    
+                    <div class="data-section">
+                        <h3>Example Questions</h3>
+                        <div class="examples">
+                            <button class="example-btn">What is EUR/USD?</button>
+                            <button class="example-btn">Show historical trends</button>
+                            <button class="example-btn">Where can I find EUR/USD data?</button>
+                            <button class="example-btn">Related currency pairs</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="trending-container">
+            <div class="trending-header">Trending Stocks (from dataset)</div>
+            <div class="trending-content" id="trendingStocks">
+                <!-- Trending stocks will be inserted here -->
+            </div>
+        </div>
+    </div>
 
     <script>
-        let data;
+        // Sample data extracted from the provided JSON
+        const eurUsdData = {
+            title: "EUR/USD (EURUSD=X) Stock Historical Prices & Data - Yahoo Finance",
+            description: "Discover historical prices for EURUSD=X stock on Yahoo Finance. View daily, weekly or monthly format back to when EUR/USD stock was issued.",
+            url: "https://finance.yahoo.com/quote/EURUSD%3DX/history",
+            timestamp: "2025-08-05T08:03:14.142Z",
+            relatedPairs: [
+                "JPY=X", "GBPUSD=X", "AUDUSD=X", "NZDUSD=X", "EURJPY=X",
+                "GBPJPY=X", "EURGBP=X", "EURCAD=X", "EURSEK=X", "EURCHF=X"
+            ],
+            trendingStocks: [
+                {symbol: "PLTR", name: "Palantir Technologies Inc.", price: 160.66, change: 4.14},
+                {symbol: "HIMS", name: "Hims & Hers Health, Inc.", price: 63.35, change: 1.28},
+                {symbol: "AEO", name: "American Eagle Outfitters, Inc.", price: 13.28, change: 23.65},
+                {symbol: "MELI", name: "MercadoLibre, Inc.", price: 2395.83, change: 0.84},
+                {symbol: "AMD", name: "Advanced Micro Devices, Inc.", price: 176.78, change: 2.99},
+                {symbol: "AFRM", name: "Affirm Holdings, Inc.", price: 74.79, change: 12.62},
+                {symbol: "NIO", name: "NIO Inc.", price: 4.60, change: -8.18},
+                {symbol: "COMM", name: "CommScope Holding Company, Inc.", price: 14.51, change: 86.26}
+            ]
+        };
 
-        fetch('known_data.json')
-            .then(response => response.json())
-            .then(json => {
-                data = json;
+        // DOM elements
+        const chatHistory = document.getElementById('chatHistory');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const trendingStocks = document.getElementById('trendingStocks');
+        const exampleBtns = document.querySelectorAll('.example-btn');
+
+        // Initialize trending stocks
+        function initTrendingStocks() {
+            trendingStocks.innerHTML = '';
+            eurUsdData.trendingStocks.forEach(stock => {
+                const stockEl = document.createElement('div');
+                stockEl.className = 'trending-item';
+                stockEl.innerHTML = `
+                    <div class="stock-symbol">${stock.symbol}</div>
+                    <div class="stock-name">${stock.name}</div>
+                    <div class="stock-price">$${stock.price.toFixed(2)}</div>
+                    <div class="stock-change ${stock.change > 0 ? 'positive' : 'negative'}">
+                        ${stock.change > 0 ? '+' : ''}${stock.change.toFixed(2)}%
+                    </div>
+                `;
+                trendingStocks.appendChild(stockEl);
             });
+        }
 
+        // Add message to chat
+        function addMessage(text, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            messageDiv.textContent = text;
+            chatHistory.appendChild(messageDiv);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        // Process user input
         function processInput() {
-            const input = document.getElementById("userInput").value;
-            const chatbox = document.getElementById("chatbox");
-
-            chatbox.innerHTML += "<div class='user'><strong>You:</strong> " + input + "</div>";
-
-            let response = generateResponse(input);
-            chatbox.innerHTML += "<div class='bot'><strong>KnownGPT:</strong> " + response + "</div>";
-            chatbox.scrollTop = chatbox.scrollHeight;
-            document.getElementById("userInput").value = "";
+            const input = userInput.value.trim();
+            if (!input) return;
+            
+            addMessage(input, true);
+            userInput.value = '';
+            
+            // Simulate processing delay
+            setTimeout(() => {
+                const response = generateResponse(input);
+                addMessage(response);
+            }, 800);
         }
 
-        function generateResponse(question) {
-            if (!data) return "Data is still loading...";
-
-            question = question.toLowerCase();
-
-            if (question.includes("title")) return "The page title is: " + data.title;
-            if (question.includes("description")) return "Description: " + data.meta?.description;
-            if (question.includes("keywords")) return "Keywords: " + data.meta?.keywords;
-            if (question.includes("url")) return "The URL is: " + data.url;
-            if (question.includes("how many links")) return "Link count: " + data.linkCount;
-            if (question.includes("how many words")) return "Word count: " + data.wordCount;
-            if (question.includes("og") || question.includes("social")) return "Social tags: " + JSON.stringify(data.socialTags);
-            if (question.includes("headings")) return "Headings: " + data.headings?.join(", ");
-            if (question.includes("images")) return "Image sources: " + data.images?.join(", ");
-            if (question.includes("links")) return "Links: " + data.links?.slice(0, 5).join(", ") + "... and more.";
-            if (question.includes("text")) return "Here’s some page text: " + data.text?.slice(0, 300) + "...";
-
-            return "Sorry, I couldn’t find an answer to that. Try asking about title, description, url, links, etc.";
+        // Generate bot response
+        function generateResponse(input) {
+            const lowerInput = input.toLowerCase();
+            
+            if (lowerInput.includes('hello') || lowerInput.includes('hi')) {
+                return "Hello! How can I assist you with EUR/USD historical data today?";
+            }
+            
+            if (lowerInput.includes('what is eur/usd') || lowerInput.includes('about eur/usd')) {
+                return "EUR/USD is the ticker symbol for the exchange rate between the Euro and the US Dollar. It indicates how many US dollars are needed to purchase one Euro. It's the most traded currency pair in the world, accounting for a significant portion of all forex transactions.";
+            }
+            
+            if (lowerInput.includes('historical') || lowerInput.includes('trend') || lowerInput.includes('price')) {
+                return "Based on the data from Yahoo Finance, you can find historical EUR/USD prices going back to when the pair was first issued. The historical data includes daily, weekly, and monthly formats. To access this data, visit: https://finance.yahoo.com/quote/EURUSD%3DX/history";
+            }
+            
+            if (lowerInput.includes('related') || lowerInput.includes('other pairs') || lowerInput.includes('currency')) {
+                return `The main related currency pairs are: ${eurUsdData.relatedPairs.slice(0, 5).join(', ')}. Other pairs include ${eurUsdData.relatedPairs.slice(5).join(', ')}. You can find historical data for these pairs on Yahoo Finance as well.`;
+            }
+            
+            if (lowerInput.includes('access') || lowerInput.includes('find') || lowerInput.includes('where')) {
+                return "You can access EUR/USD historical data on Yahoo Finance at: https://finance.yahoo.com/quote/EURUSD%3DX/history. The page provides comprehensive historical price data in various formats including daily, weekly, and monthly.";
+            }
+            
+            if (lowerInput.includes('trending') || lowerInput.includes('stocks')) {
+                return "Here are some trending stocks from the dataset: " + 
+                       eurUsdData.trendingStocks.slice(0, 3).map(s => `${s.symbol} (${s.change > 0 ? '+' : ''}${s.change.toFixed(2)}%)`).join(', ') + 
+                       ". You can find more details on Yahoo Finance.";
+            }
+            
+            return "I can help with information about EUR/USD historical data. You can ask about historical price trends, where to find the data, related currency pairs, or trending stocks. Try asking: 'What is EUR/USD?' or 'Where can I find historical EUR/USD data?'";
         }
+
+        // Set up example buttons
+        exampleBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                userInput.value = btn.textContent;
+                processInput();
+            });
+        });
+
+        // Event listeners
+        sendBtn.addEventListener('click', processInput);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') processInput();
+        });
+
+        // Initialize
+        initTrendingStocks();
     </script>
 </body>
 </html>
-"""
-
-# Save HTML file
-output_path = Path("/mnt/data/index.html")
-output_path.write_text(html_code)
-
-output_path.name  # Return the file name for user download
