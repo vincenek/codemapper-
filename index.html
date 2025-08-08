@@ -3,465 +3,405 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chart Bot - News Analysis</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Knowledge Base AI Chatbot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --bg-color: #f8f9fa;
-            --card-bg: #ffffff;
-            --primary: #3a86ff;
-            --secondary: #8338ec;
-            --text: #333333;
-            --light-text: #6c757d;
-            --border: #e0e0e0;
-            --user-bubble: #3a86ff;
-            --bot-bubble: #e9ecef;
-        }
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
+        
         body {
-            background-color: var(--bg-color);
-            color: var(--text);
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            min-height: 100vh;
             display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
         }
-
-        .header {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            padding: 1rem;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            z-index: 10;
-        }
-
+        
         .container {
-            display: flex;
-            flex: 1;
+            max-width: 800px;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
             overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-
-        .sidebar {
-            width: 300px;
-            background-color: var(--card-bg);
-            border-right: 1px solid var(--border);
-            padding: 1rem;
-            overflow-y: auto;
+        
+        .header {
+            background: linear-gradient(to right, #3a7bd5, #00d2ff);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .ai-icon {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
         }
-
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .chart-container {
-            padding: 1rem;
-            height: 45%;
-            background-color: var(--card-bg);
-            margin: 0.5rem;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-
+        
         .chat-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 0.5rem;
-            background-color: var(--card-bg);
-            margin: 0.5rem;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-
-        .chat-messages {
-            flex: 1;
+            height: 500px;
             overflow-y: auto;
-            padding: 1rem;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 0.8rem;
+            gap: 15px;
         }
-
+        
         .message {
             max-width: 80%;
-            padding: 0.8rem;
+            padding: 15px;
             border-radius: 18px;
-            line-height: 1.4;
+            animation: fadeIn 0.3s ease;
+            position: relative;
+            line-height: 1.5;
         }
-
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
         .user-message {
-            align-self: flex-end;
-            background-color: var(--user-bubble);
+            background: linear-gradient(to right, #3a7bd5, #00d2ff);
             color: white;
+            align-self: flex-end;
             border-bottom-right-radius: 5px;
         }
-
+        
         .bot-message {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
             align-self: flex-start;
-            background-color: var(--bot-bubble);
             border-bottom-left-radius: 5px;
         }
-
-        .input-area {
-            display: flex;
-            padding: 1rem;
-            border-top: 1px solid var(--border);
-        }
-
-        .input-area input {
-            flex: 1;
-            padding: 0.8rem;
-            border: 1px solid var(--border);
-            border-radius: 25px;
-            outline: none;
-            font-size: 1rem;
-        }
-
-        .input-area button {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 25px;
-            padding: 0.8rem 1.5rem;
-            margin-left: 0.5rem;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .input-area button:hover {
-            background-color: #2a75e5;
-        }
-
-        .news-card {
-            background-color: white;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .news-card:hover {
-            transform: translateY(-2px);
-        }
-
-        .news-card h3 {
-            font-size: 1rem;
-            margin-bottom: 0.5rem;
-            color: var(--text);
-        }
-
-        .news-card p {
-            font-size: 0.85rem;
-            color: var(--light-text);
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .news-card .date {
-            font-size: 0.75rem;
-            color: var(--light-text);
-            margin-top: 0.5rem;
-        }
-
-        .stats {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 0.5rem;
-            font-size: 0.75rem;
-            color: var(--light-text);
-        }
-
-        h2 {
-            margin-bottom: 1rem;
-            font-size: 1.2rem;
-            color: var(--text);
-        }
-
+        
         .typing-indicator {
             display: flex;
-            padding: 0.8rem;
-            background-color: var(--bot-bubble);
+            align-items: center;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 18px;
             align-self: flex-start;
-            border-bottom-left-radius: 5px;
-            margin-bottom: 0.5rem;
+            max-width: 120px;
         }
-
+        
         .typing-indicator span {
             height: 8px;
             width: 8px;
-            background-color: var(--light-text);
             border-radius: 50%;
+            background-color: #00d2ff;
             display: inline-block;
             margin: 0 2px;
-            animation: bounce 1.3s infinite ease-in-out;
+            animation: bounce 1.3s infinite;
         }
-
-        .typing-indicator span:nth-child(1) {
-            animation-delay: 0s;
-        }
-
+        
         .typing-indicator span:nth-child(2) {
             animation-delay: 0.15s;
         }
-
+        
         .typing-indicator span:nth-child(3) {
             animation-delay: 0.3s;
         }
-
+        
         @keyframes bounce {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-5px); }
         }
-
-        @media (max-width: 768px) {
-            .container {
-                flex-direction: column;
+        
+        .input-container {
+            display: flex;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        #user-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 50px;
+            font-size: 1rem;
+            outline: none;
+            transition: background 0.3s;
+        }
+        
+        #user-input:focus {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        #user-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        #send-button {
+            background: linear-gradient(to right, #3a7bd5, #00d2ff);
+            border: none;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-left: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: transform 0.2s;
+        }
+        
+        #send-button:hover {
+            transform: scale(1.05);
+        }
+        
+        .timestamp {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 5px;
+            text-align: right;
+        }
+        
+        .info-tag {
+            display: inline-block;
+            background: rgba(0, 210, 255, 0.2);
+            border-radius: 12px;
+            padding: 3px 10px;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+        
+        @media (max-width: 600px) {
+            .chat-container {
+                height: 400px;
             }
             
-            .sidebar {
-                width: 100%;
-                height: 200px;
-                border-right: none;
-                border-bottom: 1px solid var(--border);
+            .message {
+                max-width: 90%;
+            }
+            
+            .header h1 {
+                font-size: 1.4rem;
             }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>AI Chart Bot</h1>
-        <p>Analyzing News Data with AI Intelligence</p>
-    </div>
-    
     <div class="container">
-        <div class="sidebar">
-            <h2>Recent News Analysis</h2>
-            <div id="news-cards"></div>
+        <div class="header">
+            <h1>Knowledge Base AI</h1>
+            <p>Ask me about recent events, acquisitions, or tech news</p>
+            <div class="ai-icon">
+                <i class="fas fa-robot"></i>
+            </div>
         </div>
         
-        <div class="main-content">
-            <div class="chart-container">
-                <canvas id="newsChart"></canvas>
+        <div class="chat-container" id="chat-container">
+            <div class="message bot-message">
+                Hello! I'm an AI assistant with knowledge about recent events. You can ask me about:
+                <ul style="margin-top: 10px; padding-left: 20px;">
+                    <li>Boeing's acquisition of Spirit AeroSystems</li>
+                    <li>Take-Two Interactive's financial performance</li>
+                    <li>Ocean conservation studies</li>
+                    <li>And more...</li>
+                </ul>
+                <div class="timestamp">Just now</div>
             </div>
-            
-            <div class="chat-container">
-                <div class="chat-messages" id="chat-messages">
-                    <div class="message bot-message">
-                        Hello! I'm your AI Chart Bot. I can help you analyze news data and answer questions about the provided dataset. Try asking about companies, acquisitions, or trends in the news.
-                    </div>
-                </div>
-                
-                <div class="input-area">
-                    <input type="text" id="user-input" placeholder="Ask about the news data...">
-                    <button id="send-btn">Send</button>
-                </div>
-            </div>
+        </div>
+        
+        <div class="input-container">
+            <input type="text" id="user-input" placeholder="Ask me anything...">
+            <button id="send-button">
+                <i class="fas fa-paper-plane"></i>
+            </button>
         </div>
     </div>
 
     <script>
-        // News data from the provided dataset
-        const newsData = [
+        // Knowledge base data
+        const knowledgeBase = [
             {
-                "url": "https://www.perplexity.ai/page/uk-clears-boeing-47-billion-sp-vh9yzOZJSdO4Z9V8iJI7Jw",
-                "timestamp": "2025-08-08T10:31:45.787Z",
                 "title": "UK clears Boeing's $4.7B Spirit AeroSystems acquisition",
-                "description": "The UK's Competition and Markets Authority has cleared Boeing's $4.7 billion acquisition of Spirit AeroSystems after determining the deal would not harm competition.",
-                "wordCount": 168,
-                "linkCount": 0
+                "content": "The UK's Competition and Markets Authority has cleared Boeing's $4.7 billion acquisition of Spirit AeroSystems after determining the deal would not harm competition. This acquisition represents a significant consolidation in the aerospace industry and is expected to streamline Boeing's supply chain.",
+                "tags": ["Aerospace", "Acquisition", "Boeing"],
+                "date": "2025-08-08"
             },
             {
-                "url": "https://www.perplexity.ai/page/take-two-reports-q1-surge-with-Yh.enLhIQXOlapEa8ipwpg",
-                "timestamp": "2025-08-08T09:58:34.366Z",
                 "title": "Take-Two reports Q1 surge with $1.42B in net bookings",
-                "description": "Take-Two Interactive delivered a commanding Q1 2026 performance with net bookings surging 17% to $1.42 billion, significantly exceeding expectations.",
-                "wordCount": 174,
-                "linkCount": 10
+                "content": "Take-Two Interactive delivered a commanding Q1 2026 performance with net bookings surging 17% to $1.42 billion, significantly exceeding expectations. This growth was primarily driven by the continued success of their Grand Theft Auto franchise and the successful launch of several new titles.",
+                "tags": ["Gaming", "Finance", "Take-Two"],
+                "date": "2025-08-08"
             },
             {
-                "url": "https://www.perplexity.ai/page/chagos-study-shows-large-mpas-ikzemLFHQJG_.WlYlfoA9w",
-                "timestamp": "2025-08-08T09:56:18.331Z",
                 "title": "Study proves massive ocean reserves protect 95% of marine life",
-                "description": "A new study of the Chagos Archipelago Marine Protected Area has provided compelling evidence that massive ocean reserves can effectively safeguard marine life.",
-                "wordCount": 168,
-                "linkCount": 0
+                "content": "A new study of the Chagos Archipelago Marine Protected Area has provided compelling evidence that massive ocean reserves can effectively safeguard marine biodiversity. The research showed that these protected areas preserve approximately 95% of marine species, demonstrating their critical importance for ocean conservation.",
+                "tags": ["Environment", "Conservation", "Marine Biology"],
+                "date": "2025-08-08"
+            },
+            {
+                "title": "Chime announces AI integration in consumer fintech platform",
+                "content": "Digital banking platform Chime has announced new AI-powered features in its consumer fintech offerings. The AI enhancements focus on personalized financial advice, fraud detection improvements, and automated savings tools, positioning Chime at the forefront of AI integration in consumer banking.",
+                "tags": ["Fintech", "AI", "Banking"],
+                "date": "2025-08-08"
             }
         ];
 
-        // Initialize Chart.js
-        const ctx = document.getElementById('newsChart').getContext('2d');
-        const newsChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: newsData.map(item => item.title.substring(0, 20) + '...'),
-                datasets: [{
-                    label: 'Word Count',
-                    data: newsData.map(item => item.wordCount),
-                    backgroundColor: 'rgba(58, 134, 255, 0.7)',
-                    borderColor: 'rgba(58, 134, 255, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'News Article Analysis',
-                        font: {
-                            size: 16
-                        }
-                    },
-                    legend: {
-                        position: 'top',
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Word Count'
-                        }
-                    }
-                }
-            }
-        });
-
-        // Render news cards
-        const newsCardsContainer = document.getElementById('news-cards');
-        newsData.forEach(item => {
-            const date = new Date(item.timestamp);
-            const formattedDate = date.toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-            });
-            
-            const card = document.createElement('div');
-            card.className = 'news-card';
-            card.innerHTML = `
-                <h3>${item.title}</h3>
-                <p>${item.description}</p>
-                <div class="date">${formattedDate}</div>
-                <div class="stats">
-                    <span>📝 ${item.wordCount} words</span>
-                    <span>🔗 ${item.linkCount} links</span>
-                </div>
-            `;
-            newsCardsContainer.appendChild(card);
-        });
-
-        // Chat functionality
-        const chatMessages = document.getElementById('chat-messages');
+        // DOM elements
+        const chatContainer = document.getElementById('chat-container');
         const userInput = document.getElementById('user-input');
-        const sendBtn = document.getElementById('send-btn');
-
-        // Add message to chat
-        function addMessage(text, isUser) {
+        const sendButton = document.getElementById('send-button');
+        
+        // Add a message to the chat
+        function addMessage(text, isUser = false) {
             const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
-            messageDiv.textContent = text;
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            messageDiv.classList.add('message');
+            messageDiv.classList.add(isUser ? 'user-message' : 'bot-message');
+            
+            const timestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            messageDiv.innerHTML = `
+                ${text}
+                <div class="timestamp">${timestamp}</div>
+            `;
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
-
+        
         // Show typing indicator
-        function showTypingIndicator() {
+        function showTyping() {
             const typingDiv = document.createElement('div');
-            typingDiv.className = 'typing-indicator';
+            typingDiv.classList.add('typing-indicator');
             typingDiv.id = 'typing-indicator';
-            typingDiv.innerHTML = '<span></span><span></span><span></span>';
-            chatMessages.appendChild(typingDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            typingDiv.innerHTML = `
+                <span></span>
+                <span></span>
+                <span></span>
+            `;
+            chatContainer.appendChild(typingDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return typingDiv;
         }
-
+        
         // Hide typing indicator
-        function hideTypingIndicator() {
-            const typingIndicator = document.getElementById('typing-indicator');
-            if (typingIndicator) {
-                typingIndicator.remove();
+        function hideTyping() {
+            const typing = document.getElementById('typing-indicator');
+            if (typing) {
+                typing.remove();
             }
         }
-
-        // AI response logic
-        function getAIResponse(question) {
+        
+        // Find the most relevant response
+        function findResponse(question) {
             const lowerQuestion = question.toLowerCase();
             
-            if (lowerQuestion.includes('boeing') || lowerQuestion.includes('spirit')) {
-                return "The UK's Competition and Markets Authority has approved Boeing's $4.7 billion acquisition of Spirit AeroSystems. The deal was cleared after regulators determined it wouldn't harm market competition. This acquisition is part of Boeing's strategy to strengthen its supply chain and manufacturing capabilities.";
+            // Check for specific topics
+            if (lowerQuestion.includes('boeing') || lowerQuestion.includes('spirit') || lowerQuestion.includes('aerosystems')) {
+                return {
+                    content: knowledgeBase[0].content,
+                    title: knowledgeBase[0].title,
+                    date: knowledgeBase[0].date
+                };
             }
             
-            if (lowerQuestion.includes('take-two') || lowerQuestion.includes('q1') || lowerQuestion.includes('earnings')) {
-                return "Take-Two Interactive reported strong Q1 2026 results with net bookings surging 17% to $1.42 billion, significantly exceeding expectations. This growth was driven by successful game releases and strong performance in their recurrent consumer spending segment. The company also raised its full-year guidance based on these results.";
+            if (lowerQuestion.includes('take-two') || lowerQuestion.includes('gaming') || lowerQuestion.includes('bookings') || lowerQuestion.includes('1.42')) {
+                return {
+                    content: knowledgeBase[1].content,
+                    title: knowledgeBase[1].title,
+                    date: knowledgeBase[1].date
+                };
             }
             
-            if (lowerQuestion.includes('ocean') || lowerQuestion.includes('marine') || lowerQuestion.includes('reserve')) {
-                return "A new study on the Chagos Archipelago Marine Protected Area shows that large ocean reserves can effectively protect marine biodiversity. The research demonstrated that these protected areas safeguard approximately 95% of marine species within their boundaries. This provides compelling evidence for the effectiveness of massive ocean conservation efforts.";
+            if (lowerQuestion.includes('ocean') || lowerQuestion.includes('marine') || lowerQuestion.includes('reserve') || lowerQuestion.includes('chagos')) {
+                return {
+                    content: knowledgeBase[2].content,
+                    title: knowledgeBase[2].title,
+                    date: knowledgeBase[2].date
+                };
             }
             
-            if (lowerQuestion.includes('trend') || lowerQuestion.includes('analysis') || lowerQuestion.includes('insight')) {
-                return "Based on the news data, key trends include:\n1. Regulatory approvals for major acquisitions (Boeing/Spirit)\n2. Strong earnings in the gaming sector (Take-Two)\n3. Environmental conservation breakthroughs (Ocean reserves study)\n\nThese stories reflect ongoing business consolidation, entertainment industry resilience, and scientific advancements in conservation.";
+            if (lowerQuestion.includes('chime') || lowerQuestion.includes('fintech') || lowerQuestion.includes('banking')) {
+                return {
+                    content: knowledgeBase[3].content,
+                    title: knowledgeBase[3].title,
+                    date: knowledgeBase[3].date
+                };
             }
             
-            if (lowerQuestion.includes('help') || lowerQuestion.includes('what can you do')) {
-                return "I can help you analyze news data! Try asking about:\n- Boeing's acquisition of Spirit AeroSystems\n- Take-Two's Q1 earnings report\n- Marine conservation research\n- Trends in the dataset\n\nYou can also ask for data analysis or chart interpretations.";
-            }
-            
-            return "I'm an AI chart bot specialized in news data analysis. I can answer questions about Boeing's acquisition, Take-Two's earnings, marine conservation research, and provide insights on trends in the dataset. Try asking about one of these topics!";
+            // Default response if nothing matches
+            return {
+                content: "I'm an AI assistant with knowledge about recent business and technology events. Try asking about Boeing's acquisition, Take-Two's financial results, ocean conservation research, or fintech developments.",
+                title: "General Information",
+                date: new Date().toISOString().split('T')[0]
+            };
         }
-
-        // Handle user input
-        function handleUserInput() {
+        
+        // Handle user message
+        function handleUserMessage() {
             const question = userInput.value.trim();
             if (!question) return;
             
-            // Add user message
             addMessage(question, true);
             userInput.value = '';
             
-            // Show typing indicator
-            showTypingIndicator();
+            showTyping();
             
             // Simulate AI processing time
             setTimeout(() => {
-                hideTypingIndicator();
-                const response = getAIResponse(question);
-                addMessage(response, false);
+                hideTyping();
+                const response = findResponse(question);
+                
+                // Format the response
+                const formattedResponse = `
+                    ${response.content}
+                    <div class="info-tag">Source: ${response.title} (${response.date})</div>
+                `;
+                
+                addMessage(formattedResponse, false);
             }, 1500);
         }
-
+        
         // Event listeners
-        sendBtn.addEventListener('click', handleUserInput);
+        sendButton.addEventListener('click', handleUserMessage);
+        
         userInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                handleUserInput();
+                handleUserMessage();
             }
         });
-
-        // Initialize with sample question
-        setTimeout(() => {
-            addMessage("Can you tell me about Boeing's acquisition?", false);
-        }, 1000);
+        
+        // Initialize with a welcome message
+        window.addEventListener('load', () => {
+            userInput.focus();
+        });
     </script>
 </body>
 </html>
