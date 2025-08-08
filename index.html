@@ -1,407 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knowledge Base AI Chatbot</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 800px;
-            width: 100%;
-            background-color: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .header {
-            background: linear-gradient(to right, #3a7bd5, #00d2ff);
-            color: white;
-            padding: 20px;
-            text-align: center;
-            position: relative;
-        }
-        
-        .header h1 {
-            font-size: 1.8rem;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-        
-        .header p {
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
-        
-        .ai-icon {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.2);
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-        }
-        
-        .chat-container {
-            height: 500px;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        
-        .message {
-            max-width: 80%;
-            padding: 15px;
-            border-radius: 18px;
-            animation: fadeIn 0.3s ease;
-            position: relative;
-            line-height: 1.5;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .user-message {
-            background: linear-gradient(to right, #3a7bd5, #00d2ff);
-            color: white;
-            align-self: flex-end;
-            border-bottom-right-radius: 5px;
-        }
-        
-        .bot-message {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            align-self: flex-start;
-            border-bottom-left-radius: 5px;
-        }
-        
-        .typing-indicator {
-            display: flex;
-            align-items: center;
-            padding: 10px 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 18px;
-            align-self: flex-start;
-            max-width: 120px;
-        }
-        
-        .typing-indicator span {
-            height: 8px;
-            width: 8px;
-            border-radius: 50%;
-            background-color: #00d2ff;
-            display: inline-block;
-            margin: 0 2px;
-            animation: bounce 1.3s infinite;
-        }
-        
-        .typing-indicator span:nth-child(2) {
-            animation-delay: 0.15s;
-        }
-        
-        .typing-indicator span:nth-child(3) {
-            animation-delay: 0.3s;
-        }
-        
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-        }
-        
-        .input-container {
-            display: flex;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.05);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        #user-input {
-            flex: 1;
-            padding: 15px 20px;
-            border: none;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border-radius: 50px;
-            font-size: 1rem;
-            outline: none;
-            transition: background 0.3s;
-        }
-        
-        #user-input:focus {
-            background: rgba(255, 255, 255, 0.15);
-        }
-        
-        #user-input::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-        }
-        
-        #send-button {
-            background: linear-gradient(to right, #3a7bd5, #00d2ff);
-            border: none;
-            color: white;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            margin-left: 10px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            transition: transform 0.2s;
-        }
-        
-        #send-button:hover {
-            transform: scale(1.05);
-        }
-        
-        .timestamp {
-            font-size: 0.7rem;
-            opacity: 0.7;
-            margin-top: 5px;
-            text-align: right;
-        }
-        
-        .info-tag {
-            display: inline-block;
-            background: rgba(0, 210, 255, 0.2);
-            border-radius: 12px;
-            padding: 3px 10px;
-            font-size: 0.8rem;
-            margin-top: 10px;
-        }
-        
-        @media (max-width: 600px) {
-            .chat-container {
-                height: 400px;
-            }
-            
-            .message {
-                max-width: 90%;
-            }
-            
-            .header h1 {
-                font-size: 1.4rem;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>HG Chatbot</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
+    #chat { max-width: 600px; margin: 0 auto; }
+    .bot, .user { margin: 10px 0; padding: 10px; border-radius: 5px; }
+    .bot { background: #e0f7fa; }
+    .user { background: #dcedc8; text-align: right; }
+    input { width: 80%; padding: 10px; }
+    button { padding: 10px; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Knowledge Base AI</h1>
-            <p>Ask me about recent events, acquisitions, or tech news</p>
-            <div class="ai-icon">
-                <i class="fas fa-robot"></i>
-            </div>
-        </div>
-        
-        <div class="chat-container" id="chat-container">
-            <div class="message bot-message">
-                Hello! I'm an AI assistant with knowledge about recent events. You can ask me about:
-                <ul style="margin-top: 10px; padding-left: 20px;">
-                    <li>Boeing's acquisition of Spirit AeroSystems</li>
-                    <li>Take-Two Interactive's financial performance</li>
-                    <li>Ocean conservation studies</li>
-                    <li>And more...</li>
-                </ul>
-                <div class="timestamp">Just now</div>
-            </div>
-        </div>
-        
-        <div class="input-container">
-            <input type="text" id="user-input" placeholder="Ask me anything...">
-            <button id="send-button">
-                <i class="fas fa-paper-plane"></i>
-            </button>
-        </div>
-    </div>
+  <div id="chat">
+    <div class="bot">Hi! I'm HG, your chatbot. Ask me about Boeing and Spirit AeroSystems or tell me what you think.</div>
+  </div>
+  <input type="text" id="input" placeholder="Type your message..." />
+  <button onclick="sendMessage()">Send</button>
 
-    <script>
-        // Knowledge base data
-        const knowledgeBase = [
-            {
-                "title": "UK clears Boeing's $4.7B Spirit AeroSystems acquisition",
-                "content": "The UK's Competition and Markets Authority has cleared Boeing's $4.7 billion acquisition of Spirit AeroSystems after determining the deal would not harm competition. This acquisition represents a significant consolidation in the aerospace industry and is expected to streamline Boeing's supply chain.",
-                "tags": ["Aerospace", "Acquisition", "Boeing"],
-                "date": "2025-08-08"
-            },
-            {
-                "title": "Take-Two reports Q1 surge with $1.42B in net bookings",
-                "content": "Take-Two Interactive delivered a commanding Q1 2026 performance with net bookings surging 17% to $1.42 billion, significantly exceeding expectations. This growth was primarily driven by the continued success of their Grand Theft Auto franchise and the successful launch of several new titles.",
-                "tags": ["Gaming", "Finance", "Take-Two"],
-                "date": "2025-08-08"
-            },
-            {
-                "title": "Study proves massive ocean reserves protect 95% of marine life",
-                "content": "A new study of the Chagos Archipelago Marine Protected Area has provided compelling evidence that massive ocean reserves can effectively safeguard marine biodiversity. The research showed that these protected areas preserve approximately 95% of marine species, demonstrating their critical importance for ocean conservation.",
-                "tags": ["Environment", "Conservation", "Marine Biology"],
-                "date": "2025-08-08"
-            },
-            {
-                "title": "Chime announces AI integration in consumer fintech platform",
-                "content": "Digital banking platform Chime has announced new AI-powered features in its consumer fintech offerings. The AI enhancements focus on personalized financial advice, fraud detection improvements, and automated savings tools, positioning Chime at the forefront of AI integration in consumer banking.",
-                "tags": ["Fintech", "AI", "Banking"],
-                "date": "2025-08-08"
-            }
-        ];
+  <script>
+    const chat = document.getElementById('chat');
 
-        // DOM elements
-        const chatContainer = document.getElementById('chat-container');
-        const userInput = document.getElementById('user-input');
-        const sendButton = document.getElementById('send-button');
-        
-        // Add a message to the chat
-        function addMessage(text, isUser = false) {
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('message');
-            messageDiv.classList.add(isUser ? 'user-message' : 'bot-message');
-            
-            const timestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            
-            messageDiv.innerHTML = `
-                ${text}
-                <div class="timestamp">${timestamp}</div>
-            `;
-            
-            chatContainer.appendChild(messageDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-        
-        // Show typing indicator
-        function showTyping() {
-            const typingDiv = document.createElement('div');
-            typingDiv.classList.add('typing-indicator');
-            typingDiv.id = 'typing-indicator';
-            typingDiv.innerHTML = `
-                <span></span>
-                <span></span>
-                <span></span>
-            `;
-            chatContainer.appendChild(typingDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-            return typingDiv;
-        }
-        
-        // Hide typing indicator
-        function hideTyping() {
-            const typing = document.getElementById('typing-indicator');
-            if (typing) {
-                typing.remove();
-            }
-        }
-        
-        // Find the most relevant response
-        function findResponse(question) {
-            const lowerQuestion = question.toLowerCase();
-            
-            // Check for specific topics
-            if (lowerQuestion.includes('boeing') || lowerQuestion.includes('spirit') || lowerQuestion.includes('aerosystems')) {
-                return {
-                    content: knowledgeBase[0].content,
-                    title: knowledgeBase[0].title,
-                    date: knowledgeBase[0].date
-                };
-            }
-            
-            if (lowerQuestion.includes('take-two') || lowerQuestion.includes('gaming') || lowerQuestion.includes('bookings') || lowerQuestion.includes('1.42')) {
-                return {
-                    content: knowledgeBase[1].content,
-                    title: knowledgeBase[1].title,
-                    date: knowledgeBase[1].date
-                };
-            }
-            
-            if (lowerQuestion.includes('ocean') || lowerQuestion.includes('marine') || lowerQuestion.includes('reserve') || lowerQuestion.includes('chagos')) {
-                return {
-                    content: knowledgeBase[2].content,
-                    title: knowledgeBase[2].title,
-                    date: knowledgeBase[2].date
-                };
-            }
-            
-            if (lowerQuestion.includes('chime') || lowerQuestion.includes('fintech') || lowerQuestion.includes('banking')) {
-                return {
-                    content: knowledgeBase[3].content,
-                    title: knowledgeBase[3].title,
-                    date: knowledgeBase[3].date
-                };
-            }
-            
-            // Default response if nothing matches
-            return {
-                content: "I'm an AI assistant with knowledge about recent business and technology events. Try asking about Boeing's acquisition, Take-Two's financial results, ocean conservation research, or fintech developments.",
-                title: "General Information",
-                date: new Date().toISOString().split('T')[0]
-            };
-        }
-        
-        // Handle user message
-        function handleUserMessage() {
-            const question = userInput.value.trim();
-            if (!question) return;
-            
-            addMessage(question, true);
-            userInput.value = '';
-            
-            showTyping();
-            
-            // Simulate AI processing time
-            setTimeout(() => {
-                hideTyping();
-                const response = findResponse(question);
-                
-                // Format the response
-                const formattedResponse = `
-                    ${response.content}
-                    <div class="info-tag">Source: ${response.title} (${response.date})</div>
-                `;
-                
-                addMessage(formattedResponse, false);
-            }, 1500);
-        }
-        
-        // Event listeners
-        sendButton.addEventListener('click', handleUserMessage);
-        
-        userInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                handleUserMessage();
-            }
-        });
-        
-        // Initialize with a welcome message
-        window.addEventListener('load', () => {
-            userInput.focus();
-        });
-    </script>
+    const knowledge = {
+      boeing: "The UK's Competition and Markets Authority cleared Boeing's $4.7 billion acquisition of Spirit AeroSystems. The CMA said the deal would not harm competition in the aerospace sector.",
+      spirit: "Spirit AeroSystems is a key supplier of fuselage components. Boeing's acquisition is valued at $4.7 billion.",
+      competition: "The CMA believes the acquisition would not negatively impact competition in the aerospace industry.",
+      deal: "The Boeing-Spirit AeroSystems deal was worth $4.7 billion and was cleared by the UK’s CMA on August 8, 2025."
+    };
+
+    const botQuestions = [
+      "Do you think Boeing's acquisition gives them too much control?",
+      "How might this deal affect suppliers?",
+      "Do you follow the aerospace industry?",
+      "Should governments regulate big mergers like this more strictly?"
+    ];
+
+    function sendMessage() {
+      const input = document.getElementById('input');
+      const msg = input.value.trim();
+      if (!msg) return;
+
+      addMessage('user', msg);
+      input.value = '';
+
+      const lower = msg.toLowerCase();
+      let response = "I'm not sure I understand that. Try asking about the Boeing deal or Spirit AeroSystems.";
+
+      if (lower.includes("boeing")) response = knowledge.boeing;
+      else if (lower.includes("spirit")) response = knowledge.spirit;
+      else if (lower.includes("competition")) response = knowledge.competition;
+      else if (lower.includes("deal") || lower.includes("acquisition")) response = knowledge.deal;
+
+      setTimeout(() => {
+        addMessage('bot', response);
+        // Ask follow-up question
+        const question = botQuestions[Math.floor(Math.random() * botQuestions.length)];
+        setTimeout(() => {
+          addMessage('bot', question);
+        }, 1000);
+      }, 500);
+    }
+
+    function addMessage(sender, text) {
+      const msg = document.createElement('div');
+      msg.className = sender;
+      msg.innerText = text;
+      chat.appendChild(msg);
+      chat.scrollTop = chat.scrollHeight;
+    }
+  </script>
 </body>
 </html>
