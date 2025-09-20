@@ -1,75 +1,1794 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>HG Chatbot</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
-    #chat { max-width: 600px; margin: 0 auto; }
-    .bot, .user { margin: 10px 0; padding: 10px; border-radius: 5px; }
-    .bot { background: #e0f7fa; }
-    .user { background: #dcedc8; text-align: right; }
-    input { width: 80%; padding: 10px; }
-    button { padding: 10px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeMapper Pro - Code Dependency Visualization</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --dark-1: #0f172a;
+            --dark-2: #1e293b;
+            --dark-3: #334155;
+            --light-1: #f8fafc;
+            --light-2: #e2e8f0;
+            --light-3: #cbd5e1;
+            --text-dark: #1e293b;
+            --text-light: #f8fafc;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            --transition: all 0.3s ease;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: var(--light-1);
+            --bg-secondary: var(--light-2);
+            --bg-tertiary: var(--light-3);
+            --text-primary: var(--text-dark);
+            --text-secondary: #475569;
+            --card-bg: white;
+            --border-color: #e2e8f0;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: var(--dark-1);
+            --bg-secondary: var(--dark-2);
+            --bg-tertiary: var(--dark-3);
+            --text-primary: var(--text-light);
+            --text-secondary: #94a3b8;
+            --card-bg: var(--dark-2);
+            --border-color: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: var(--transition);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+        
+        /* Header Styles */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 15px 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            flex-wrap: wrap;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo-icon {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+        
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .tagline {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 3px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        /* Theme Toggle */
+        .theme-toggle, .help-btn {
+            background: var(--bg-secondary);
+            border-radius: 50px;
+            padding: 8px;
+            display: flex;
+            cursor: pointer;
+            position: relative;
+            width: 44px;
+            height: 44px;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-color);
+        }
+        
+        .theme-toggle i, .help-btn i {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+        
+        /* Main Layout */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .input-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .card-title i {
+            color: var(--primary);
+        }
+        
+        /* Input Styles */
+        textarea, select, input {
+            width: 100%;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+            color: var(--text-primary);
+            font-family: 'Fira Code', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            transition: var(--transition);
+        }
+        
+        textarea {
+            min-height: 200px;
+        }
+        
+        textarea:focus, select:focus, input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        
+        select, input {
+            min-height: auto;
+            height: 46px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        /* Visualization Area */
+        .visualization-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .visualization {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            min-height: 400px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .visualization-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .view-options {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        #graph-canvas {
+            flex: 1;
+            border-radius: 10px;
+            background: var(--bg-secondary);
+            position: relative;
+            overflow: hidden;
+            min-height: 300px;
+        }
+        
+        /* Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--primary);
+            border: none;
+            padding: 12px 18px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 14px;
+            box-shadow: var(--shadow);
+            justify-content: center;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+            background: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .btn-accent {
+            background: var(--accent);
+        }
+        
+        .btn-accent:hover {
+            background: #e99a0c;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        
+        /* Stats and Legend */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+        
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+        
+        .stat-number.functions { color: var(--primary); }
+        .stat-number.variables { color: var(--secondary); }
+        .stat-number.classes { color: var(--accent); }
+        .stat-number.imports { color: #8b5cf6; }
+        .stat-number.dependencies { color: var(--danger); }
+        
+        .legend {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 18px;
+            background: var(--bg-secondary);
+            box-shadow: var(--shadow);
+            font-size: 0.85rem;
+        }
+        
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+        }
+        
+        .legend-color.function { background: var(--primary); }
+        .legend-color.variable { background: var(--secondary); }
+        .legend-color.class { background: var(--accent); }
+        .legend-color.import { background: #8b5cf6; }
+        .legend-color.dependency { background: var(--danger); }
+        
+        /* Advanced Features */
+        .advanced-features {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-top: 25px;
+        }
+        
+        .feature-card {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-3px);
+        }
+        
+        .feature-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .feature-title i {
+            color: var(--primary);
+        }
+        
+        .collaboration-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            padding: 8px;
+            border-radius: 8px;
+            background: var(--bg-secondary);
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--secondary);
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+        }
+        
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 20px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        
+        /* Responsive Design */
+        @media (min-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .header {
+                padding: 20px 30px;
+                margin-bottom: 30px;
+            }
+            
+            .logo-icon {
+                font-size: 2.5rem;
+            }
+            
+            .logo-text {
+                font-size: 1.8rem;
+            }
+            
+            .tagline {
+                font-size: 1rem;
+            }
+            
+            .theme-toggle, .help-btn {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .theme-toggle i, .help-btn i {
+                font-size: 1.2rem;
+            }
+            
+            .main-content {
+                flex-direction: row;
+                gap: 25px;
+                margin-bottom: 30px;
+            }
+            
+            .input-section {
+                width: 40%;
+            }
+            
+            .visualization-container {
+                width: 60%;
+            }
+            
+            .card {
+                padding: 25px;
+                border-radius: 16px;
+            }
+            
+            .card-title {
+                font-size: 1.3rem;
+            }
+            
+            textarea, select, input {
+                padding: 15px;
+                border-radius: 12px;
+            }
+            
+            textarea {
+                min-height: 250px;
+            }
+            
+            select, input {
+                height: 50px;
+            }
+            
+            .visualization {
+                padding: 25px;
+                border-radius: 16px;
+                min-height: 500px;
+            }
+            
+            .controls {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 15px;
+                margin: 30px 0;
+            }
+            
+            .btn {
+                padding: 14px 25px;
+                border-radius: 12px;
+                font-size: 16px;
+            }
+            
+            .stats {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 20px;
+                margin-top: 30px;
+            }
+            
+            .stat-card {
+                padding: 20px;
+                border-radius: 12px;
+            }
+            
+            .stat-number {
+                font-size: 2.2rem;
+            }
+            
+            .advanced-features {
+                grid-template-columns: 1fr 1fr;
+                gap: 25px;
+                margin-top: 30px;
+            }
+            
+            .feature-card {
+                padding: 25px;
+                border-radius: 16px;
+            }
+            
+            .feature-title {
+                font-size: 1.2rem;
+            }
+            
+            .modal-content {
+                padding: 30px;
+            }
+            
+            .modal-title {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Animation Keyframes */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            text-align: center;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.9rem;
+            box-shadow: var(--shadow);
+        }
+        
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+        
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            background: var(--bg-secondary);
+            transition: var(--transition);
+            white-space: nowrap;
+            font-size: 0.9rem;
+        }
+        
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        /* Progress Bar */
+        .progress-bar {
+            height: 6px;
+            width: 100%;
+            background: var(--bg-secondary);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .progress {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        
+        /* Graph nodes */
+        .node {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .node:hover {
+            stroke: #fff;
+            stroke-width: 2px;
+        }
+        
+        .node-text {
+            font-size: 12px;
+            font-weight: 600;
+            pointer-events: none;
+            text-anchor: middle;
+            dominant-baseline: central;
+        }
+        
+        .link {
+            stroke: #94a3b8;
+            stroke-opacity: 0.6;
+            transition: all 0.3s ease;
+        }
+        
+        .link:hover {
+            stroke: var(--primary);
+            stroke-opacity: 1;
+            stroke-width: 2px;
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary);
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* AI Insights Panel */
+        .ai-insights {
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .ai-insights h3 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+        
+        .ai-insights ul {
+            padding-left: 20px;
+            color: var(--text-secondary);
+        }
+        
+        .ai-insights li {
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        
+        /* Mobile menu */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+        
+        @media (max-width: 767px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .header-actions {
+                display: none;
+                flex-direction: column;
+                width: 100%;
+                gap: 10px;
+                margin-top: 15px;
+            }
+            
+            .header-actions.active {
+                display: flex;
+            }
+            
+            .theme-toggle, .help-btn {
+                width: 100%;
+                border-radius: 10px;
+                justify-content: flex-start;
+                padding: 12px 15px;
+            }
+        }
+    </style>
 </head>
-<body>
-  <div id="chat">
-    <div class="bot">Hi! I'm HG, your chatbot. Ask me about Boeing and Spirit AeroSystems or tell me what you think.</div>
-  </div>
-  <input type="text" id="input" placeholder="Type your message..." />
-  <button onclick="sendMessage()">Send</button>
+<body data-theme="dark">
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <i class="fas fa-code-branch logo-icon"></i>
+                <div>
+                    <h1 class="logo-text">CodeMapper Pro</h1>
+                    <p class="tagline">AI-Powered Code Dependency Visualization</p>
+                </div>
+            </div>
+            <button class="mobile-menu-btn" id="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="header-actions" id="header-actions">
+                <div class="help-btn" id="help-btn">
+                    <i class="fas fa-question-circle"></i>
+                </div>
+                <div class="theme-toggle" id="theme-toggle">
+                    <i class="fas fa-sun"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fas fa-file-code"></i> Code Input</h2>
+                        <div class="view-options">
+                            <button class="btn btn-secondary" onclick="toggleEditor()">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <textarea id="codeInput" placeholder="Paste your code here..."></textarea>
+                    
+                    <div class="form-group">
+                        <label for="projectName">Project Name</label>
+                        <input type="text" id="projectName" placeholder="Enter project name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="language">Programming Language</label>
+                        <select id="language">
+                            <option value="javascript">JavaScript</option>
+                            <option value="typescript">TypeScript</option>
+                            <option value="python">Python</option>
+                            <option value="java">Java</option>
+                            <option value="csharp">C#</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="analysisDepth">Analysis Depth</label>
+                        <select id="analysisDepth">
+                            <option value="basic">Basic (Fast)</option>
+                            <option value="standard" selected>Standard</option>
+                            <option value="deep">Deep Analysis</option>
+                        </select>
+                        <div class="progress-bar">
+                            <div class="progress" id="analysisProgress" style="width: 30%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fas fa-cogs"></i> Analysis Settings</h2>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="layout">Visualization Layout</label>
+                        <select id="layout">
+                            <option value="force">Force-Directed</option>
+                            <option value="hierarchical">Hierarchical</option>
+                            <option value="circular">Circular</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Analysis Options</label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px;">
+                            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.9rem;">
+                                <input type="checkbox" id="detectSmells" checked> Detect Code Smells
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.9rem;">
+                                <input type="checkbox" id="detectCircular" checked> Identify Circular Dependencies
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.9rem;">
+                                <input type="checkbox" id="suggestOptimizations" checked> Suggest Optimizations
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="visualization-container">
+                <div class="visualization">
+                    <div class="visualization-header">
+                        <h2 class="card-title"><i class="fas fa-project-diagram"></i> Dependency Visualization</h2>
+                        <div class="view-options">
+                            <button class="btn btn-secondary" onclick="zoomIn()">
+                                <i class="fas fa-search-plus"></i>
+                            </button>
+                            <button class="btn btn-secondary" onclick="zoomOut()">
+                                <i class="fas fa-search-minus"></i>
+                            </button>
+                            <button class="btn btn-secondary" onclick="resetZoom()">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="graph-canvas">
+                        <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
+                            <div style="text-align: center; color: var(--text-secondary);">
+                                <i class="fas fa-project-diagram" style="font-size: 2.5rem; margin-bottom: 12px;"></i>
+                                <h3>No code analyzed yet</h3>
+                                <p>Enter your code and click "Analyze" to visualize</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color function"></div>
+                            <span>Functions</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color variable"></div>
+                            <span>Variables</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color class"></div>
+                            <span>Classes</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color import"></div>
+                            <span>Imports</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <button class="btn" onclick="analyzeDependencies()">
+                        <i class="fas fa-bolt"></i> Analyze
+                    </button>
+                    <button class="btn btn-accent" onclick="loadExample()">
+                        <i class="fas fa-magic"></i> Example
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportGraph()">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                    <button class="btn btn-danger" onclick="resetGraph()">
+                        <i class="fas fa-trash"></i> Reset
+                    </button>
+                </div>
+                
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number functions" id="functionsCount">0</div>
+                        <div>Functions</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number variables" id="variablesCount">0</div>
+                        <div>Variables</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number classes" id="classesCount">0</div>
+                        <div>Classes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number imports" id="importsCount">0</div>
+                        <div>Imports</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="advanced-features">
+            <div class="feature-card">
+                <h3 class="feature-title"><i class="fas fa-brain"></i> AI Insights</h3>
+                <div id="ai-insights-container">
+                    <p>AI analysis will appear here after code analysis.</p>
+                </div>
+                <div class="collaboration-status">
+                    <div class="status-indicator"></div>
+                    <span>AI Analysis: Ready</span>
+                </div>
+            </div>
+            
+            <div class="feature-card">
+                <h3 class="feature-title"><i class="fas fa-chart-line"></i> Code Metrics</h3>
+                <div id="code-metrics">
+                    <p>Code metrics will appear here after analysis.</p>
+                </div>
+                <div class="collaboration-status">
+                    <div class="status-indicator" style="background: var(--accent);"></div>
+                    <span>Metrics: Pending</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
-  <script>
-    const chat = document.getElementById('chat');
+    <!-- Help Modal -->
+    <div class="modal" id="help-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">CodeMapper Pro Help</h2>
+                <button class="close-modal" id="close-modal">&times;</button>
+            </div>
+            <div>
+                <h3>How to Use</h3>
+                <p>1. Paste your code into the code input area</p>
+                <p>2. Select the programming language</p>
+                <p>3. Choose your analysis preferences</p>
+                <p>4. Click "Analyze" to generate the visualization</p>
+                
+                <h3>Features</h3>
+                <p><strong>Code Analysis:</strong> Detects functions, variables, classes, and imports</p>
+                <p><strong>Dependency Mapping:</strong> Visualizes relationships between code elements</p>
+                <p><strong>AI Insights:</strong> Provides intelligent code recommendations</p>
+                <p><strong>Export Options:</strong> Export your dependency graph as PNG or SVG</p>
+                
+                <h3>Tips</h3>
+                <p>• Use the zoom buttons to explore large graphs</p>
+                <p>• Hover over nodes to see connections highlighted</p>
+                <p>• Try different layouts to find the best visualization for your code</p>
+            </div>
+        </div>
+    </div>
 
-    const knowledge = {
-      boeing: "The UK's Competition and Markets Authority cleared Boeing's $4.7 billion acquisition of Spirit AeroSystems. The CMA said the deal would not harm competition in the aerospace sector.",
-      spirit: "Spirit AeroSystems is a key supplier of fuselage components. Boeing's acquisition is valued at $4.7 billion.",
-      competition: "The CMA believes the acquisition would not negatively impact competition in the aerospace industry.",
-      deal: "The Boeing-Spirit AeroSystems deal was worth $4.7 billion and was cleared by the UK’s CMA on August 8, 2025."
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const headerActions = document.getElementById('header-actions');
+        
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.body.setAttribute('data-theme', newTheme);
+            
+            // Update icon
+            const icon = themeToggle.querySelector('i');
+            icon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            
+            // Save preference
+            localStorage.setItem('theme', newTheme);
+        });
+        
+        // Mobile menu toggle
+        mobileMenuBtn.addEventListener('click', () => {
+            headerActions.classList.toggle('active');
+        });
+        
+        // Help Modal
+        const helpBtn = document.getElementById('help-btn');
+        const helpModal = document.getElementById('help-modal');
+        const closeModal = document.getElementById('close-modal');
+        
+        helpBtn.addEventListener('click', () => {
+            helpModal.style.display = 'flex';
+        });
+        
+        closeModal.addEventListener('click', () => {
+            helpModal.style.display = 'none';
+        });
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === helpModal) {
+                helpModal.style.display = 'none';
+            }
+        });
+        
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.body.setAttribute('data-theme', savedTheme);
+        
+        // D3.js graph variables
+        let svg, simulation, zoom;
+        let currentTransform = d3.zoomIdentity;
+        
+        // Initialize D3.js visualization
+        function initD3Visualization() {
+            const canvas = document.getElementById('graph-canvas');
+            canvas.innerHTML = '';
+            
+            const width = canvas.offsetWidth;
+            const height = canvas.offsetHeight;
+            
+            svg = d3.select('#graph-canvas')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height)
+                .attr('viewBox', [0, 0, width, height])
+                .attr('class', 'graph-svg');
+            
+            // Add zoom functionality
+            zoom = d3.zoom()
+                .scaleExtent([0.1, 4])
+                .on('zoom', (event) => {
+                    currentTransform = event.transform;
+                    svg.selectAll('g.container').attr('transform', event.transform);
+                });
+            
+            svg.call(zoom);
+            
+            // Create container for all graph elements
+            const container = svg.append('g').attr('class', 'container');
+            
+            // Add initial text
+            container.append('text')
+                .attr('x', width / 2)
+                .attr('y', height / 2)
+                .attr('text-anchor', 'middle')
+                .attr('fill', '#94a3b8')
+                .attr('font-size', '16px')
+                .text('Analyzing code...');
+        }
+        
+        // Create graph visualization
+        function createGraphVisualization(elements, layoutType) {
+            const canvas = document.getElementById('graph-canvas');
+            const width = canvas.offsetWidth;
+            const height = canvas.offsetHeight;
+            
+            // Clear previous graph
+            d3.select('.graph-svg').remove();
+            
+            svg = d3.select('#graph-canvas')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height)
+                .attr('viewBox', [0, 0, width, height])
+                .attr('class', 'graph-svg');
+            
+            // Set up zoom
+            zoom = d3.zoom()
+                .scaleExtent([0.1, 4])
+                .on('zoom', (event) => {
+                    currentTransform = event.transform;
+                    svg.selectAll('g.container').attr('transform', event.transform);
+                });
+            
+            svg.call(zoom);
+            
+            const container = svg.append('g').attr('class', 'container');
+            
+            // Create nodes from elements
+            const nodes = [];
+            const nodeMap = {};
+            
+            // Add functions as nodes
+            elements.functions.forEach((func, i) => {
+                const node = {
+                    id: `function-${i}`,
+                    name: func.name,
+                    type: 'function',
+                    radius: 20,
+                    color: '#6366f1',
+                    complexity: func.complexity
+                };
+                nodes.push(node);
+                nodeMap[func.name] = node;
+            });
+            
+            // Add classes as nodes
+            elements.classes.forEach((cls, i) => {
+                const node = {
+                    id: `class-${i}`,
+                    name: cls,
+                    type: 'class',
+                    radius: 25,
+                    color: '#f59e0b'
+                };
+                nodes.push(node);
+                nodeMap[cls] = node;
+            });
+            
+            // Add variables as nodes
+            elements.variables.forEach((variable, i) => {
+                const node = {
+                    id: `variable-${i}`,
+                    name: variable,
+                    type: 'variable',
+                    radius: 15,
+                    color: '#10b981'
+                };
+                nodes.push(node);
+                nodeMap[variable] = node;
+            });
+            
+            // Add imports as nodes
+            elements.imports.forEach((imp, i) => {
+                const node = {
+                    id: `import-${i}`,
+                    name: imp,
+                    type: 'import',
+                    radius: 18,
+                    color: '#8b5cf6'
+                };
+                nodes.push(node);
+                nodeMap[imp] = node;
+            });
+            
+            // Create links from dependencies
+            const links = [];
+            elements.dependencies.forEach(dep => {
+                if (nodeMap[dep.from] && nodeMap[dep.to]) {
+                    links.push({
+                        source: nodeMap[dep.from].id,
+                        target: nodeMap[dep.to].id,
+                        type: dep.type
+                    });
+                }
+            });
+            
+            // Create the force simulation
+            simulation = d3.forceSimulation(nodes)
+                .force('charge', d3.forceManyBody().strength(-300))
+                .force('link', d3.forceLink(links).id(d => d.id).distance(100))
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(d => d.radius + 10));
+            
+            // Draw links
+            const link = container.append('g')
+                .attr('class', 'links')
+                .selectAll('line')
+                .data(links)
+                .enter()
+                .append('line')
+                .attr('class', 'link')
+                .attr('stroke-width', 2);
+            
+            // Draw nodes
+            const node = container.append('g')
+                .attr('class', 'nodes')
+                .selectAll('circle')
+                .data(nodes)
+                .enter()
+                .append('circle')
+                .attr('class', 'node')
+                .attr('r', d => d.radius)
+                .attr('fill', d => d.color)
+                .call(d3.drag()
+                    .on('start', dragstarted)
+                    .on('drag', dragged)
+                    .on('end', dragended));
+            
+            // Add node labels
+            const label = container.append('g')
+                .attr('class', 'labels')
+                .selectAll('text')
+                .data(nodes)
+                .enter()
+                .append('text')
+                .attr('class', 'node-text')
+                .attr('fill', '#fff')
+                .attr('font-size', d => d.type === 'class' ? '10px' : '9px')
+                .text(d => d.name);
+            
+            // Update positions on each tick
+            simulation.on('tick', () => {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+                
+                node
+                    .attr('cx', d => d.x)
+                    .attr('cy', d => d.y);
+                
+                label
+                    .attr('x', d => d.x)
+                    .attr('y', d => d.y);
+            });
+            
+            // Add hover interactions
+            node.on('mouseover', function(event, d) {
+                // Highlight connected nodes
+                link.style('stroke-opacity', l => 
+                    l.source === d || l.target === d ? 1 : 0.2);
+                
+                node.style('opacity', n => 
+                    n === d || links.some(l => l.source === n && l.target === d) || 
+                    links.some(l => l.source === d && l.target === n) ? 1 : 0.2);
+                
+                label.style('opacity', n => 
+                    n === d || links.some(l => l.source === n && l.target === d) || 
+                    links.some(l => l.source === d && l.target === n) ? 1 : 0.2);
+                
+                // Show tooltip
+                const tooltip = document.createElement('div');
+                tooltip.className = 'tooltip';
+                tooltip.innerHTML = `<strong>${d.name}</strong><br>Type: ${d.type}`;
+                tooltip.style.position = 'absolute';
+                tooltip.style.background = 'rgba(0, 0, 0, 0.8)';
+                tooltip.style.color = 'white';
+                tooltip.style.padding = '8px';
+                tooltip.style.borderRadius = '4px';
+                tooltip.style.pointerEvents = 'none';
+                document.body.appendChild(tooltip);
+                
+                // Position tooltip
+                const moveTooltip = (e) => {
+                    tooltip.style.left = (e.pageX + 10) + 'px';
+                    tooltip.style.top = (e.pageY - 28) + 'px';
+                };
+                
+                moveTooltip(event);
+                node.on('mousemove', moveTooltip);
+                
+                // Remove tooltip on mouseout
+                node.on('mouseout', () => {
+                    link.style('stroke-opacity', 0.6);
+                    node.style('opacity', 1);
+                    label.style('opacity', 1);
+                    
+                    if (tooltip) {
+                        document.body.removeChild(tooltip);
+                    }
+                    
+                    node.on('mousemove', null);
+                });
+            });
+        }
+        
+        // Drag functions for nodes
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+        
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+        
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+        
+        // Zoom functions
+        function zoomIn() {
+            if (!svg) return;
+            svg.transition().call(zoom.scaleBy, 1.5);
+        }
+        
+        function zoomOut() {
+            if (!svg) return;
+            svg.transition().call(zoom.scaleBy, 0.75);
+        }
+        
+        function resetZoom() {
+            if (!svg) return;
+            svg.transition().call(zoom.transform, d3.zoomIdentity);
+        }
+        
+        // Toggle fullscreen editor
+        function toggleEditor() {
+            const textarea = document.getElementById('codeInput');
+            textarea.style.height = textarea.style.height === '400px' ? '200px' : '400px';
+        }
+        
+        // Enhanced code parsing with AI analysis
+        function parseCode(code, language) {
+            const elements = {
+                functions: [],
+                variables: [],
+                classes: [],
+                imports: [],
+                dependencies: [],
+                issues: [],
+                recommendations: []
+            };
+            
+            // JavaScript/TypeScript specific parsing
+            if (language === 'javascript' || language === 'typescript') {
+                // Parse functions with complexity analysis
+                const functionRegex = /(?:function\s+(\w+)|(?:const|let|var)\s+(\w+)\s*=\s*(?:function|\([^)]*\)\s*=>)|(?:async\s+)?function\s*\*?\s*(\w+))/g;
+                let match;
+                while ((match = functionRegex.exec(code)) !== null) {
+                    const name = match[1] || match[2] || match[3];
+                    if (name && !elements.functions.some(f => f.name === name)) {
+                        // Calculate function complexity (simplified)
+                        const complexity = calculateComplexity(code, name);
+                        elements.functions.push({ name, complexity });
+                    }
+                }
+                
+                // Parse classes
+                const classRegex = /class\s+(\w+)/g;
+                while ((match = classRegex.exec(code)) !== null) {
+                    if (match[1] && !elements.classes.includes(match[1])) {
+                        elements.classes.push(match[1]);
+                    }
+                }
+                
+                // Parse variables
+                const variableRegex = /(?:const|let|var)\s+(\w+)\s*=/g;
+                while ((match = variableRegex.exec(code)) !== null) {
+                    const name = match[1];
+                    if (name && !elements.variables.includes(name) && 
+                        !elements.functions.some(f => f.name === name) && 
+                        !elements.classes.includes(name)) {
+                        elements.variables.push(name);
+                    }
+                }
+                
+                // Parse imports
+                const importRegex = /import\s+.*?from\s+['"]([^'"]+)['"]|require\s*\(['"]([^'"]+)['"]\)/g;
+                while ((match = importRegex.exec(code)) !== null) {
+                    const name = match[1] || match[2];
+                    if (name && !elements.imports.includes(name)) {
+                        elements.imports.push(name);
+                    }
+                }
+                
+                // Parse methods (for classes)
+                const methodRegex = /(\w+)\s*\([^)]*\)\s*\{/g;
+                while ((match = methodRegex.exec(code)) !== null) {
+                    const name = match[1];
+                    if (name && !elements.functions.some(f => f.name === name) && 
+                        !elements.variables.includes(name)) {
+                        // Calculate method complexity
+                        const complexity = calculateComplexity(code, name);
+                        elements.functions.push({ name, complexity });
+                    }
+                }
+                
+                // Find dependencies
+                elements.functions.forEach(func => {
+                    // Find function calls
+                    elements.functions.forEach(otherFunc => {
+                        if (func.name !== otherFunc.name && new RegExp(`\\b${otherFunc.name}\\(`).test(code)) {
+                            elements.dependencies.push({ from: func.name, to: otherFunc.name, type: 'function-call' });
+                        }
+                    });
+                    
+                    // Find variable usage
+                    elements.variables.forEach(variable => {
+                        if (new RegExp(`\\b${variable}\\b`).test(code)) {
+                            elements.dependencies.push({ from: func.name, to: variable, type: 'variable-use' });
+                        }
+                    });
+                    
+                    // Find class usage
+                    elements.classes.forEach(cls => {
+                        if (new RegExp(`\\b${cls}\\b`).test(code)) {
+                            elements.dependencies.push({ from: func.name, to: cls, type: 'class-use' });
+                        }
+                    });
+                });
+                
+                // Generate AI insights based on code analysis
+                generateAIInsights(elements, code);
+            }
+            
+            return elements;
+        }
+        
+        // Calculate function complexity (simplified version)
+        function calculateComplexity(code, funcName) {
+            // Simple complexity calculation based on lines and control structures
+            const funcPattern = new RegExp(`(function\\s+${funcName}|${funcName}\\s*=\\s*function|${funcName}\\s*:\s*function)\\s*\\([^)]*\\)\\s*{([^}]*)}`, 'g');
+            const match = funcPattern.exec(code);
+            if (!match) return 1;
+            
+            const functionBody = match[2];
+            let complexity = 1;
+            
+            // Count control structures
+            complexity += (functionBody.match(/if\s*\(/g) || []).length;
+            complexity += (functionBody.match(/for\s*\(/g) || []).length;
+            complexity += (functionBody.match(/while\s*\(/g) || []).length;
+            complexity += (functionBody.match(/switch\s*\(/g) || []).length;
+            complexity += (functionBody.match(/\?/g) || []).length;
+            
+            return Math.min(complexity, 10); // Cap at 10 for visualization purposes
+        }
+        
+        // Generate AI insights based on code analysis
+        function generateAIInsights(elements, code) {
+            elements.insights = [];
+            elements.metrics = {};
+            
+            // Calculate code metrics
+            const totalLines = code.split('\n').length;
+            const commentLines = (code.match(/\/\/|\/*/g) || []).length;
+            const commentRatio = commentLines / totalLines;
+            
+            elements.metrics.totalLines = totalLines;
+            elements.metrics.commentRatio = commentRatio;
+            
+            // Generate insights based on analysis
+            if (elements.functions.length > 0) {
+                const avgComplexity = elements.functions.reduce((sum, f) => sum + f.complexity, 0) / elements.functions.length;
+                elements.metrics.avgComplexity = avgComplexity;
+                
+                if (avgComplexity > 5) {
+                    elements.insights.push("High function complexity detected. Consider refactoring complex functions into smaller, more focused functions.");
+                }
+                
+                // Find the most complex function
+                const mostComplex = elements.functions.reduce((max, f) => f.complexity > max.complexity ? f : max, elements.functions[0]);
+                if (mostComplex.complexity > 7) {
+                    elements.insights.push(`Function "${mostComplex.name}" is particularly complex (complexity: ${mostComplex.complexity}/10). Consider breaking it down into smaller functions.`);
+                }
+            }
+            
+            if (elements.dependencies.length > elements.functions.length * 2) {
+                elements.insights.push("High coupling detected. The code has many dependencies between functions, which may make it difficult to maintain.");
+            }
+            
+            if (commentRatio < 0.1) {
+                elements.insights.push("Low comment ratio. Consider adding more comments to improve code documentation.");
+            }
+            
+            if (elements.imports.length > 10) {
+                elements.insights.push("Many external dependencies detected. This may increase bundle size and complexity.");
+            }
+            
+            // Check for potential circular dependencies
+            const circularDeps = findCircularDependencies(elements.dependencies);
+            if (circularDeps.length > 0) {
+                elements.insights.push("Potential circular dependencies detected. This can cause issues with module loading and initialization.");
+                elements.issues.push("Circular dependencies");
+            }
+            
+            // Add positive feedback for good practices
+            if (elements.functions.length > 0 && elements.metrics.avgComplexity < 3) {
+                elements.insights.push("Good function complexity overall. Functions appear to be focused and maintainable.");
+            }
+            
+            if (commentRatio > 0.2) {
+                elements.insights.push("Good documentation practices. The code has sufficient comments.");
+            }
+        }
+        
+        // Simple circular dependency detection
+        function findCircularDependencies(dependencies) {
+            const circular = [];
+            // Simplified detection - in a real implementation, this would use graph algorithms
+            if (dependencies.length > 10) {
+                // Simulate finding some circular dependencies
+                if (dependencies.length > 15) {
+                    circular.push("Possible circular dependencies between modules");
+                }
+            }
+            return circular;
+        }
+        
+        // Enhanced analysis function
+        function analyzeDependencies() {
+            const code = document.getElementById('codeInput').value.trim();
+            const language = document.getElementById('language').value;
+            const analysisDepth = document.getElementById('analysisDepth').value;
+            
+            if (!code) {
+                alert('Please enter some code to analyze!');
+                return;
+            }
+            
+            // Show loading state
+            initD3Visualization();
+            
+            // Simulate processing time based on analysis depth
+            const delay = analysisDepth === 'basic' ? 1000 : 
+                         analysisDepth === 'standard' ? 2000 : 3500;
+            
+            // Update progress bar
+            const progressBar = document.getElementById('analysisProgress');
+            let progress = 30;
+            progressBar.style.width = `${progress}%`;
+            
+            const progressInterval = setInterval(() => {
+                progress += 5;
+                if (progress < 95) {
+                    progressBar.style.width = `${progress}%`;
+                }
+            }, delay / 15);
+            
+            setTimeout(() => {
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+                
+                // Parse the code
+                const elements = parseCode(code, language);
+                
+                // Update statistics
+                updateStats(elements);
+                
+                // Create visualization based on selected layout
+                const layout = document.getElementById('layout').value;
+                createGraphVisualization(elements, layout);
+                
+                // Display AI insights
+                displayAIInsights(elements);
+                
+            }, delay);
+        }
+        
+        // Display AI insights
+        function displayAIInsights(elements) {
+            const insightsContainer = document.getElementById('ai-insights-container');
+            const metricsContainer = document.getElementById('code-metrics');
+            
+            if (!elements.insights || elements.insights.length === 0) {
+                insightsContainer.innerHTML = '<p>No significant insights found. Code appears to be well structured.</p>';
+            } else {
+                let insightsHTML = '<div class="ai-insights"><h3><i class="fas fa-lightbulb"></i> Analysis Insights</h3><ul>';
+                elements.insights.forEach(insight => {
+                    insightsHTML += `<li>${insight}</li>`;
+                });
+                insightsHTML += '</ul></div>';
+                insightsContainer.innerHTML = insightsHTML;
+            }
+            
+            // Display metrics
+            if (elements.metrics) {
+                let metricsHTML = '<ul>';
+                if (elements.metrics.totalLines) {
+                    metricsHTML += `<li><strong>Total Lines:</strong> ${elements.metrics.totalLines}</li>`;
+                }
+                if (elements.metrics.avgComplexity) {
+                    metricsHTML += `<li><strong>Average Complexity:</strong> ${elements.metrics.avgComplexity.toFixed(2)}/10</li>`;
+                }
+                if (elements.metrics.commentRatio) {
+                    metricsHTML += `<li><strong>Comment Ratio:</strong> ${(elements.metrics.commentRatio * 100).toFixed(1)}%</li>`;
+                }
+                metricsHTML += '</ul>';
+                metricsContainer.innerHTML = metricsHTML;
+            }
+        }
+        
+        // Update statistics
+        function updateStats(elements) {
+            document.getElementById('functionsCount').textContent = elements.functions.length;
+            document.getElementById('variablesCount').textContent = elements.variables.length;
+            document.getElementById('classesCount').textContent = elements.classes.length;
+            document.getElementById('importsCount').textContent = elements.imports.length;
+        }
+        
+        // Export function
+        function exportGraph() {
+            if (!svg) {
+                alert("No graph to export. Please analyze code first.");
+                return;
+            }
+            
+            // In a real implementation, this would export the graph
+            alert("Export feature would save the graph as an image in a real implementation.");
+        }
+        
+        // Reset function
+        function resetGraph() {
+            if (confirm("Are you sure you want to reset the current analysis?")) {
+                document.getElementById('codeInput').value = '';
+                document.getElementById('projectName').value = '';
+                const canvas = document.getElementById('graph-canvas');
+                canvas.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; height: 100%;"><div style="text-align: center; color: var(--text-secondary);"><i class="fas fa-project-diagram" style="font-size: 2.5rem; margin-bottom: 12px;"></i><h3>No code analyzed yet</h3><p>Enter your code and click "Analyze" to visualize</p></div></div>';
+                
+                // Reset stats
+                updateStats({ functions: [], variables: [], classes: [], imports: [] });
+                
+                // Reset progress bar
+                document.getElementById('analysisProgress').style.width = '30%';
+                
+                // Reset AI insights
+                document.getElementById('ai-insights-container').innerHTML = '<p>AI analysis will appear here after code analysis.</p>';
+                document.getElementById('code-metrics').innerHTML = '<p>Code metrics will appear here after analysis.</p>';
+            }
+        }
+        
+        // Load example code
+        function loadExample() {
+            const exampleCode = `// E-commerce Order Processing System
+import { PaymentService } from './services/payment';
+import { InventoryManager } from './inventory';
+import { EmailService } from './notifications';
+
+class OrderProcessor {
+    constructor(config) {
+        this.paymentService = new PaymentService(config.payment);
+        this.inventory = new InventoryManager(config.inventory);
+        this.emailService = new EmailService(config.email);
+        this.maxRetries = config.maxRetries || 3;
+    }
+    
+    async processOrder(orderData) {
+        const validationResult = validateOrder(orderData);
+        if (!validationResult.isValid) {
+            throw new Error(validationResult.error);
+        }
+        
+        const inventoryCheck = await this.inventory.checkAvailability(orderData.items);
+        if (!inventoryCheck.available) {
+            return this.handleOutOfStock(orderData);
+        }
+        
+        const payment = await this.paymentService.processPayment(orderData.payment);
+        const order = await createOrder(orderData, payment.transactionId);
+        
+        await this.inventory.reserveItems(orderData.items);
+        await this.emailService.sendConfirmation(orderData.customer, order);
+        
+        return order;
+    }
+    
+    async handleOutOfStock(orderData) {
+        const backorderDate = await this.inventory.getNextAvailableDate(orderData.items);
+        await this.emailService.sendBackorderNotification(orderData.customer, backorderDate);
+        return createBackorder(orderData, backorderDate);
+    }
+}
+
+function validateOrder(orderData) {
+    const requiredFields = ['customer', 'items', 'payment'];
+    const result = { isValid: true, error: null };
+    
+    for (const field of requiredFields) {
+        if (!orderData[field]) {
+            result.isValid = false;
+            result.error = \`Missing required field: \${field}\`;
+            break;
+        }
+    }
+    
+    return result;
+}
+
+async function createOrder(orderData, transactionId) {
+    const order = {
+        id: generateOrderId(),
+        customer: orderData.customer,
+        items: orderData.items,
+        transactionId: transactionId,
+        status: 'processing',
+        createdAt: new Date(),
+        total: calculateTotal(orderData.items)
     };
+    
+    await saveOrder(order);
+    return order;
+}
 
-    const botQuestions = [
-      "Do you think Boeing's acquisition gives them too much control?",
-      "How might this deal affect suppliers?",
-      "Do you follow the aerospace industry?",
-      "Should governments regulate big mergers like this more strictly?"
-    ];
+function generateOrderId() {
+    return 'ORD-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+}
 
-    function sendMessage() {
-      const input = document.getElementById('input');
-      const msg = input.value.trim();
-      if (!msg) return;
+function calculateTotal(items) {
+    return items.reduce((total, item) => total + (item.price * item.quantity), 0);
+}
 
-      addMessage('user', msg);
-      input.value = '';
+const SHIPPING_RATES = {
+    standard: 5.99,
+    express: 12.99,
+    overnight: 24.99
+};
 
-      const lower = msg.toLowerCase();
-      let response = "I'm not sure I understand that. Try asking about the Boeing deal or Spirit AeroSystems.";
-
-      if (lower.includes("boeing")) response = knowledge.boeing;
-      else if (lower.includes("spirit")) response = knowledge.spirit;
-      else if (lower.includes("competition")) response = knowledge.competition;
-      else if (lower.includes("deal") || lower.includes("acquisition")) response = knowledge.deal;
-
-      setTimeout(() => {
-        addMessage('bot', response);
-        // Ask follow-up question
-        const question = botQuestions[Math.floor(Math.random() * botQuestions.length)];
-        setTimeout(() => {
-          addMessage('bot', question);
-        }, 1000);
-      }, 500);
-    }
-
-    function addMessage(sender, text) {
-      const msg = document.createElement('div');
-      msg.className = sender;
-      msg.innerText = text;
-      chat.appendChild(msg);
-      chat.scrollTop = chat.scrollHeight;
-    }
-  </script>
+const TAX_RATE = 0.08;`;
+            
+            document.getElementById('codeInput').value = exampleCode;
+            document.getElementById('projectName').value = 'E-commerce Order Processor';
+        }
+        
+        // Initialize with some default settings
+        window.onload = function() {
+            // Set default language to JavaScript
+            document.getElementById('language').value = 'javascript';
+            
+            // Set default layout to Force-Directed
+            document.getElementById('layout').value = 'force';
+            
+            // Load the example code
+            loadExample();
+        };
+        
+        // Make the app responsive to window resize
+        window.addEventListener('resize', function() {
+            if (simulation) {
+                const canvas = document.getElementById('graph-canvas');
+                const width = canvas.offsetWidth;
+                const height = canvas.offsetHeight;
+                
+                simulation.force('center', d3.forceCenter(width / 2, height / 2));
+                simulation.alpha(0.3).restart();
+            }
+        });
+    </script>
 </body>
 </html>
