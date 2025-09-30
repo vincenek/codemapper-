@@ -1,0 +1,22 @@
+{
+  "name": "code mapper",
+  "short_name": "code mapper",
+  "description": "Advanced code mapping mechanism",
+  "start_url": "https://vincenek.github.io/codemapper-/",
+  "display": "standalone",
+  "background_color": "#f0f9ff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "https://i.postimg.cc/D0NrHsyq/web-app-manifest-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://i.postimg.cc/QCCgfSsm/web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+
